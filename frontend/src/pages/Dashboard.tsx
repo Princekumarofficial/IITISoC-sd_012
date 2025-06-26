@@ -16,6 +16,7 @@ import { CallDetailsModal } from "../components/Call-details"
 import { Navbar } from "../components/Navbar"
 import { Footer } from "../components/Footer"
 
+import { useUser } from "../context/UserContext";
 // Mock data for call history
 const callHistory = [
   {
@@ -51,6 +52,8 @@ const callHistory = [
 ]
 
 function DashboardContent() {
+  const { user, logout } = useUser();
+
   const [activeTab, setActiveTab] = useState("history")
   const [showSettings, setShowSettings] = useState(false)
   const [showProfile, setShowProfile] = useState(false)

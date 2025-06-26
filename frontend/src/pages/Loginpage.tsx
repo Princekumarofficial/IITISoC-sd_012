@@ -1,41 +1,92 @@
-import React, { useState } from "react"
-import { useNavigate } from "react-router-dom"
-import { Button } from "../components/ui/Button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/Card"
-import { Moon, Sun, Video, Sparkles, Zap, Heart } from "lucide-react"
-import { TailCursor } from "../components/Tail-cursor"
-import { NotificationProvider, useNotifications } from "../components/Notification-system"
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Button } from "../components/ui/Button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../components/ui/Card";
+import { Moon, Sun, Video, Sparkles, Zap, Heart } from "lucide-react";
+import { TailCursor } from "../components/Tail-cursor";
+import {
+  NotificationProvider,
+  useNotifications,
+} from "../components/Notification-system";
+import { signInWithPopup, UserCredential } from "firebase/auth";
+import { auth, googleProvider } from "../service/firebase";
+import API from "../service/api";
+import { useUser } from "../context/UserContext";
 
-function LoginContent() {
-  const [isLoading, setIsLoading] = useState(false)
-  const [theme, setTheme] = useState("light")
-  const navigate = useNavigate()
-  const { addNotification } = useNotifications()
+const LoginContent: React.FC = () => {
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [theme, setTheme] = useState<"light" | "dark">("light");
+  const navigate = useNavigate();
+  const { addNotification } = useNotifications();
 
-  const handleGoogleSignIn = async () => {
-    setIsLoading(true)
+ const { setUser } = useUser();
+
+
+
+  // (only the changed portion)
+
+ const handleGoogleSignIn = async () => {
+  setIsLoading(true);
+
+  try {
     addNotification({
       type: "info",
       title: "Signing In",
       message: "Connecting to your Google account...",
-    })
+    });
 
+    const result: UserCredential = await signInWithPopup(auth, googleProvider);
+    const user = result.user;
+
+    const response = await API.googleauth({
+      name: user.displayName,
+      email: user.email,
+      photoURL: user.photoURL,
+    });
+      const mongoUser = response.data.user;
+
+       
+    setUser({
+      id: mongoUser._id,
+      name: mongoUser.username,
+      email: mongoUser.email,
+      photoURL: mongoUser.photoURL,
+    });
+ 
+
+
+    addNotification({
+      type: "success",
+      title: "Welcome to MediCall!",
+      message: "Successfully signed in. Redirecting to dashboard...",
+    });
+      setIsLoading(false);
     setTimeout(() => {
-      addNotification({
-        type: "success",
-        title: "Welcome to MediCall!",
-        message: "Successfully signed in. Redirecting to dashboard...",
-      })
-      setTimeout(() => {
-        navigate("/dashboard")
-      }, 1000)
-    }, 1500)
-  }
+      navigate("/dashboard");
+    }, 1500);
+  } catch (err: any) {
+    
+    addNotification({
+      type: "error",
+      title: "Authentication Failed",
+      message: err.message,
+    });
+  
+   } 
+    
+  
+};
+
 
   return (
     <div className="min-h-screen signin-bg flex items-center justify-center p-4 relative overflow-hidden">
       <TailCursor />
-
       <div className="absolute top-4 right-4">
         <Button
           variant="ghost"
@@ -120,13 +171,15 @@ function LoginContent() {
         </CardContent>
       </Card>
     </div>
-  )
-}
+  );
+};
 
-export default function LoginPage() {
+const LoginPage: React.FC = () => {
   return (
     <NotificationProvider>
       <LoginContent />
     </NotificationProvider>
-  )
-}
+  );
+};
+
+export default LoginPage;

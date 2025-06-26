@@ -26,7 +26,7 @@ import {
   HelpCircle,
 } from "lucide-react";
 import { useNotifications } from "../components/Notification-system";
-
+import { useUser } from "../context/UserContext";
 export function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [theme, setTheme] = useState("light");
@@ -36,6 +36,8 @@ export function Navbar() {
   const { addNotification } = useNotifications();
 
   const isActive = (path) => location.pathname === path;
+
+  const { user, logout } = useUser();
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", theme === "dark");
@@ -66,6 +68,7 @@ export function Navbar() {
   };
 
   const handleSignOut = () => {
+    logout();
     addNotification({
       type: "info",
       title: "Signing Out",
@@ -156,8 +159,8 @@ export function Navbar() {
                     <AvatarFallback>JD</AvatarFallback>
                   </Avatar>
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium">John Doe</p>
-                    <p className="text-xs text-muted-foreground">john@example.com</p>
+                    <p className="text-sm font-medium">{user?.name}</p>
+                    <p className="text-xs text-muted-foreground">{user?.email}</p>
                   </div>
                 </div>
                 <DropdownMenuSeparator />
