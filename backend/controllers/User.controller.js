@@ -44,8 +44,8 @@ export const logout = (req, res) => {
   }
 };
 
-import cloudinary from '../utils/cloudinary.js'; // your cloudinary setup
-import User from '../models/User.js'; // your User model
+// import cloudinary from '../utils/cloudinary.js'; // your cloudinary setup
+// import User from '../models/User.js'; // your User model
 
 export const updateProfile = async (req, res) => {
   try {
