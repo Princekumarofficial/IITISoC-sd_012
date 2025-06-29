@@ -1,6 +1,5 @@
 import multer from 'multer';
 
-
   // Import the configured Cloudinary instance
 
 // Multer storage configuration (we'll use memory storage so we can upload directly to Cloudinary)
