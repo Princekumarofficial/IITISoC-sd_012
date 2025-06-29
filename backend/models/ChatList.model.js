@@ -1,12 +1,10 @@
 import mongoose , {Schema} from "mongoose" ;
 
 const ChatListSchema = new Schema({
-
-    id : {
-        type : String ,
-        required : true , 
+    userID :{
+        type : String,
     },
-    name: { 
+    username: { 
         type: String,
          required: true 
         },
@@ -15,29 +13,16 @@ const ChatListSchema = new Schema({
         required : true ,
         default : "/profile.jpg"
     },
-    lastMessage : {
+    email : {
         type : String ,
-        
-    },
-    lastMessageTime : {
-        type : String ,
-      
-    },
-    unreadcount : {
-        type : Number ,
-    },
-    isGroup : {
-        type : Boolean,
     },
     isOnline : {
         type : Boolean,
     },
-    participants : {
-        type : String[] , 
-    },
-    type  : {
-        type : String ,
-    }
+    isPinned: { type: Boolean, default: false },
+    //  participantsName: [String],
+    //  participantsID: [String],
+     type: { type: String, enum: ["direct", "group"], default: "direct" },
    
 } , {timestamps : true});
 const ChatList = mongoose.model("ChatList" ,ChatListSchema)

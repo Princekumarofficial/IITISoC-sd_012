@@ -4,6 +4,7 @@ import User from "../models/User.models.js";
 import { generateToken } from "../libs/utils.js";
 import dotenv from "dotenv"
 import cloudinary from "../libs/cloudinary.js";
+import ChatList from "../models/ChatList.model.js";
 dotenv.config();
 
 export const authGoogle = async(req , res) => {
@@ -21,6 +22,22 @@ export const authGoogle = async(req , res) => {
         photoURL: photoURL,
       });
       await user.save();
+
+      // ✅ Create a ChatList entry for this new user
+        const newChatList = new ChatList({
+          userID : user._id ,
+          name: name,
+          avatar: photoURL || "/profile.jpg",
+          email : email,
+         
+          isOnline: true,            // optional: mark as online if you track status
+          isPinned: false,
+         
+          type: "direct"
+        });
+        await newChatList.save();
+
+
     }
      //generatewebtoken
      generateToken(user._id, res);
@@ -44,48 +61,48 @@ export const logout = (req, res) => {
   }
 };
 
-import cloudinary from '../utils/cloudinary.js'; // your cloudinary setup
-import User from '../models/User.js'; // your User model
 
 export const updateProfile = async (req, res) => {
   try {
-    const { position, company, bio, phone } = req.body;
+    const { username, position, company, bio, phone } = req.body;
     const userId = req.user._id;
 
-    if (!req.file) {
-      return res.status(400).json({ message: "Profile pic is required" });
+    let updateFields = { username, position, company, bio, phone };
+
+    if (req.file) {
+      // helper function to wrap upload_stream in a promise
+      const streamUpload = (buffer) => {
+        return new Promise((resolve, reject) => {
+          const stream = cloudinary.uploader.upload_stream(
+            { folder: 'profile_pics' },  // use a meaningful folder name
+            (error, result) => {
+              if (error) reject(error);
+              else resolve(result);
+            }
+          );
+          stream.end(buffer);
+        });
+      };
+
+      const result = await streamUpload(req.file.buffer);
+      updateFields.photoURL = result.secure_url;
     }
 
-    // Upload file buffer to Cloudinary
-    const uploadResponse = await cloudinary.uploader.upload_stream(
-      { folder: 'profile_pics' },
-      async (error, result) => {
-        if (error) {
-          console.error("Cloudinary upload error:", error);
-          return res.status(500).json({ message: "Cloudinary error" });
-        }
+    const updatedUser = await User.findByIdAndUpdate(userId, updateFields, { new: true });
+    return res.status(200).json(updatedUser);
 
-        const updatedUser = await User.findByIdAndUpdate(
-          userId,
-          {
-            photoURL: result.secure_url,
-            position,
-            company,
-            bio,
-            phone
-          },
-          { new: true }
-        );
-
-        res.status(200).json(updatedUser);
-      }
-    );
-
-    // Pipe the file buffer into the uploader
-    uploadResponse.end(req.file.buffer);
   } catch (error) {
-    console.log("error in update profile:", error);
+    console.error("Error in updateProfile:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 };
 
+
+export const checkAuth = (req, res) => {
+  try {
+    res.status(200).json(req.user);
+  } catch (error) {
+    console.log("Error in checkAuth controller", error.message);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};

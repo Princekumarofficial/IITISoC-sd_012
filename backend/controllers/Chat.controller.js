@@ -1,23 +1,59 @@
-import Chat from "../models/Chat.model.js";
 
-export const newChat = async (request, response) => {
-    try {
-        const chat = await new Chat(request.body);
-        chat.save();
+import cloudinary from "../libs/cloudinary.js";
+import { getReceiverSocketId , io } from "../libs/socket.js";
+import Message from "../models/Message.model.js";
 
-        response.status(200).json('chat sent successfully');
-    } catch (error) {
-        response.status(500).json(error);
+
+
+export const getMessages = async (req, res) => {
+  try {
+    const { id: userToChatId } = req.params;
+    const myId = req.user._id;
+
+    const messages = await Chat.find({
+      $or: [
+        { senderId: myId, receiverId: userToChatId },
+        { senderId: userToChatId, receiverId: myId },
+      ],
+    });
+
+    res.status(200).json(messages);
+  } catch (error) {
+    console.log("Error in getMessages controller: ", error.message);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+export const sendMessage = async (req, res) => {
+  try {
+    const { text } = req.body;
+    const { id: receiverId } = req.body;
+    const senderId = req.user._id;
+
+    let imageUrl;
+    if (image) {
+      // Upload base64 image to cloudinary
+      const uploadResponse = await cloudinary.uploader.upload(image);
+      imageUrl = uploadResponse.secure_url;
     }
-}
 
-export const getAllChat = async (request, response) => {
-    try {
-       
-        const   chat = await Chat.find({});
-     
-        response.status(200).json(chat);
-    } catch (error) {
-        response.status(500).json(error)
-    }
+    const newMessage = new Message({
+      senderId,
+      receiverId,
+      text,
+      image: imageUrl,
+    });
+
+    await newMessage.save();
+
+    // const receiverSocketId = getReceiverSocketId(receiverId);
+    // if (receiverSocketId) {
+    //   io.to(receiverSocketId).emit("newMessage", newMessage);
+    // }
+
+    res.status(201).json(newMessage);
+  } catch (error) {
+    console.log("Error in sendMessage controller: ", error.message);
+    res.status(500).json({ error: "Internal server error" });
+  }
 };

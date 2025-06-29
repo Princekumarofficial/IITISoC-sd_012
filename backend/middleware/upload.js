@@ -1,7 +1,6 @@
 import multer from 'multer';
-import path from 'path';
-import { v4 as uuidv4 } from 'uuid';
-import cloudinary from '../utils/cloudinary.js';
+
+
   // Import the configured Cloudinary instance
 
 // Multer storage configuration (we'll use memory storage so we can upload directly to Cloudinary)
