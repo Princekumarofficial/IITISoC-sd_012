@@ -17,7 +17,8 @@ import {
 import { signInWithPopup, UserCredential } from "firebase/auth";
 import { auth, googleProvider } from "../service/firebase";
 import API from "../service/api";
-import { useUser } from "../context/UserContext";
+
+import { useAuthStore } from "../store/useAuthStore";
 
 const LoginContent: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -25,8 +26,8 @@ const LoginContent: React.FC = () => {
   const navigate = useNavigate();
   const { addNotification } = useNotifications();
 
- const { setUser } = useUser();
-
+   const { login, isLoggingIn , authUser } = useAuthStore();
+   
 
 
   // (only the changed portion)
@@ -43,24 +44,18 @@ const LoginContent: React.FC = () => {
 
     const result: UserCredential = await signInWithPopup(auth, googleProvider);
     const user = result.user;
-
+    
     const response = await API.googleauth({
       name: user.displayName,
       email: user.email,
       photoURL: user.photoURL,
     });
       const mongoUser = response.data.user;
-
-       
-    setUser({
-      id: mongoUser._id,
-      name: mongoUser.username,
-      email: mongoUser.email,
-      photoURL: mongoUser.photoURL,
-    });
- 
-
-
+     console.log(mongoUser , ' user from loginpage')
+    //  send data to authstore
+     await login(mongoUser);
+      
+        
     addNotification({
       type: "success",
       title: "Welcome to MediCall!",

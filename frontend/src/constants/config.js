@@ -1,5 +1,7 @@
 // config.js
 
+
+
 // Notification Messages
 export const API_NOTIFICATION_MESSAGES = {
   loading: {
@@ -26,23 +28,18 @@ export const API_NOTIFICATION_MESSAGES = {
 
 // API endpoint services
 export const SERVICE_URLS = {
-  // userSignup: { url: '/signup', method: 'POST' },
-  // userLogin: { url: '/login', method: 'POST' },
-
-  // createRide: { url: '/create', method: 'POST' },
-  // getAllRide: { url: '/rides', method: 'GET', params: true },
-  // getRideById: (id) => ({ url: `/rideDetail/${id}`, method: 'GET' }),
-  // deleteRide: (id) => ({ url: `/delete/${id}`, method: 'DELETE' }),
-  // updateRide: { url: '/update', method: 'PUT', query: true },
-
-  // newReply: { url: '/newReply', method: 'POST' },
-  // getAllReplies: { url: '/replies', method: 'GET', query: true },
-  // deleteReply: { url: '/reply/delete', method: 'DELETE', query: true },
-  // updateReply: { url: '/reply/update', method: 'PUT' },
-  // getReplies: { url: '/allreplies', method: 'GET', params: true },
-
+ 
   contactUs: { url: '/contactUs', method: 'POST' },
   googleauth: { url: '/google-auth', method: 'POST' },
+  updateProfile : {url : '/updateProfile' , method : 'PUT'},
+  checkAuth: {url : '/check' , method : 'GET'},
+  logout: {url : '/logout' , method : 'POST'} ,
+  getUsersForSidebar : {url : '/chatlist' , method : 'GET'},
+  
+  sendMessage:{
+    url : `/send` , method : 'POST'
+  } ,
+  getMessages : (id) => ({ url : `/create/${id}` , method : 'GET'}),
 
   // newChat: { url: '/newChat', method: 'POST' },
   // getAllChat: { url: '/chats', method: 'GET', query: true },

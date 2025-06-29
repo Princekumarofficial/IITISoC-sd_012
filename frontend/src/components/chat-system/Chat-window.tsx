@@ -1,3 +1,5 @@
+
+
 "use client"
 
 import type React from "react"
@@ -12,6 +14,10 @@ import { ScrollArea } from "../ui/Scroll-area"
 import { Send, Paperclip, Smile, Phone, Video, ImageIcon, File, Mic, Camera, Users, Search, Info } from "lucide-react"
 import { format } from "date-fns"
 import { useNotifications } from "../Notification-system"
+import { useChatStore } from "../../store/useChatStore"
+//new 
+
+
 
 interface Message {
   id: string
@@ -291,7 +297,7 @@ export function ChatWindow({ chat, currentUserId }: ChatWindowProps) {
   }
 
   return (
-    <Card className="h-full glass flex flex-col">
+    <Card className="h-full glass flex flex-col my-4">
       {/* Header */}
       <CardHeader className="pb-3 border-b">
         <div className="flex items-center justify-between">

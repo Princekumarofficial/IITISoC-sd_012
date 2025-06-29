@@ -116,7 +116,7 @@ function DashboardContent() {
           <div className="flex gap-8">
             {/* Sidebar */}
             <aside className="w-64 space-y-4 slide-in-left">
-              <Card className="glass glow breathe">
+              <Card className=" glass glow breathe">
                 <CardContent className="p-4">
                   <nav className="space-y-2">
                     <Button
@@ -227,7 +227,7 @@ function DashboardContent() {
                 >
                   <CardHeader>
                     <CardTitle className="flex items-center text-xl">
-                      <div className="w-12 h-12 bg-gradient-to-br from-primary to-blue-600 rounded-xl flex items-center justify-center mr-3 glow">
+                      <div className="w-12 h-12 bg-gradient-to-br from-primary to-blue-600 rounded-xl flex items-center justify-center mr-3 glow ">
                         <Video className="w-6 h-6 text-white" />
                       </div>
                       Start New Meeting

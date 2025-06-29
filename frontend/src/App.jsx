@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { BrowserRouter, Routes, Route } from "react-router-dom"
+import { useState ,useEffect} from 'react'
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"
 import './App.css'
 import HelpPage from './pages/Help'
 import LoginPage from './pages/Loginpage'
@@ -8,50 +8,47 @@ import DashboardPage from './pages/Dashboard'
 import MeetingPage from './pages/Meetingid'
 import AboutPage from './pages/About'
 import ContactForm from './pages/ContactUs'
+import ProfilePage from './pages/profile'
 
-import { AuthProvider } from './context/AuthProvider'
-import PrivateRoute from './components/PrivateRoute'
-import { UserProvider } from './context/UserContext'
+
+import { useAuthStore } from './store/useAuthStore'
+import { Loader } from 'lucide-react'
 
 
 function App() {
+  const { authUser, checkAuth, isCheckingAuth, onlineUsers } = useAuthStore();
  
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
 
+   console.log("authUser from App.jsx:", authUser);
+   
+  if (isCheckingAuth && !authUser)
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <Loader className="size-10 animate-spin" />
+      </div>
+    );
   return (
     <>
      <BrowserRouter>
-     <AuthProvider>
-      <UserProvider>
+    
+
       <Routes>
-        <Route path="/" element={<LoginPage />} />
-        <Route path="/dashboard" element={<PrivateRoute>
-          <DashboardPage />
-          </PrivateRoute>} />
-          <Route path="/contactus" element={<PrivateRoute>
-          <ContactForm />
-          </PrivateRoute>} />
-        <Route path="/meeting/:id" element={<PrivateRoute>
-          <MeetingPage />
-          </PrivateRoute>} />
-      
-      <Route path="/about" element={
-        <PrivateRoute>
-        <AboutPage />
-        </PrivateRoute>} />
-        <Route path="/help" element={
-          <PrivateRoute>
-          <HelpPage />
-          </PrivateRoute>} />
-        <Route path="/meeting:id" element={<PrivateRoute>
-          <MeetingPage />
-          </PrivateRoute>} />
-        <Route path="/chat" element={
-          <PrivateRoute>
-            <ChatPage />
-            </PrivateRoute>} />
+        <Route path="/" element={!authUser ? <LoginPage /> : <Navigate to="/dashboard" />}/>
+        <Route path="/dashboard" element={authUser ? <DashboardPage /> : <Navigate to="/" />} />
+
+         <Route path="/chat" element={authUser ? <ChatPage /> : <Navigate to="/" />} />
+        <Route path="/about" element={authUser ? <AboutPage /> : <Navigate to="/" />} />
+        <Route path="/help" element={authUser ? <HelpPage /> : <Navigate to="/" />} />
+        <Route path="/meeting/:id" element={authUser ? <MeetingPage /> : <Navigate to="/" />} />
+        <Route path="/profilepage" element={authUser ? <ProfilePage /> : <Navigate to="/" />} />
+        <Route path="/contactus" element={authUser ? <ContactForm /> : <Navigate to="/" />} />
+
       </Routes>
-      </UserProvider>
-      </AuthProvider>
+     
+     
     </BrowserRouter>
 
     </>

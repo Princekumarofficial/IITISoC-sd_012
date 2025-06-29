@@ -67,10 +67,10 @@ export function ChatPanel() {
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col   h-full">
       {/* Messages */}
-      <ScrollArea className="flex-1 p-4 custom-scrollbar">
-        <div className="space-y-4">
+      <ScrollArea className="flex-1 p-4 custom-scrollbar  ">
+        <div className="space-y-4 ">
           {messages.map((message) => (
             <div
               key={message.id}

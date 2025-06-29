@@ -11,6 +11,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../co
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/Tabs"
 import { Progress } from "../components/ui/progress"
 import { Camera, Edit, Star, Trophy, Smile } from "lucide-react"
+import { NotificationProvider, useNotifications } from "../components/Notification-system"
+import API from "../service/api.js"
+import { useAuthStore } from "../store/useAuthStore"
 
 interface ProfileModalProps {
   open: boolean
@@ -18,15 +21,52 @@ interface ProfileModalProps {
 }
 
 export function ProfileModal({ open, onOpenChange }: ProfileModalProps) {
-  const [isEditing, setIsEditing] = useState(false)
+  const { authUser } = useAuthStore()
+  const { addNotification } = useNotifications()
+
+   // use authUser data instead of hardcoded
   const [profile, setProfile] = useState({
-    name: "John Doe",
-    email: "john.doe@example.com",
-    title: "Senior Developer",
-    company: "Tech Corp",
-    bio: "Passionate about creating amazing user experiences with cutting-edge technology.",
-    avatar: "/profile.jpg?height=100&width=100",
+    name: authUser?.username || "John Doe",
+    email: authUser?.email || "john.doe@example.com",
+    title: authUser?.position || "Senior Developer",
+    company: authUser?.company || "Tech Corp",
+    bio: authUser?.bio || "Passionate about creating amazing user experiences.",
+    avatar: authUser?.photoURL || "/profile.jpg",
   })
+
+  const [isEditing, setIsEditing] = useState(false)
+   const [isUpdating, setIsUpdating] = useState(false)
+  const [selectedImg, setSelectedImg] = useState<File | null>(null)
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) setSelectedImg(file)
+  }
+
+  const handleSave = async () => {
+    try {
+      setIsUpdating(true)
+      addNotification({ type: "info", title: "Updating", message: "Please wait..." })
+
+      const formData = new FormData()
+      formData.append("username", profile.name)
+      formData.append("position", profile.title)
+      formData.append("company", profile.company)
+      formData.append("bio", profile.bio)
+      if (selectedImg) {
+        formData.append("file", selectedImg)
+      }
+
+      await API.updateProfile(formData)
+
+      addNotification({ type: "success", title: "Success", message: "Profile updated!" })
+      setIsEditing(false)
+    } catch (err: any) {
+      addNotification({ type: "error", title: "Error", message: err?.message || "Update failed" })
+    } finally {
+      setIsUpdating(false)
+    }
+  }
 
   const stats = {
     totalCalls: 156,
@@ -74,21 +114,15 @@ export function ProfileModal({ open, onOpenChange }: ProfileModalProps) {
                 <div className="flex items-center space-x-6">
                   <div className="relative">
                     <Avatar className="w-24 h-24 glow">
-                      <AvatarImage src={profile.avatar || "/profile.jpg"} />
+                      <AvatarImage src={selectedImg ? URL.createObjectURL(selectedImg) : profile.avatar} />
                       <AvatarFallback className="text-2xl">
-                        {profile.name
-                          .split(" ")
-                          .map((n) => n[0])
-                          .join("")}
+                        {profile.name.split(" ").map((n) => n[0]).join("")}
                       </AvatarFallback>
                     </Avatar>
-                    <Button
-                      size="sm"
-                      className="absolute -bottom-2 -right-2 rounded-full w-8 h-8 p-0"
-                      onClick={() => setIsEditing(!isEditing)}
-                    >
-                      {isEditing ? <Camera className="w-4 h-4" /> : <Edit className="w-4 h-4" />}
-                    </Button>
+                    <label className="absolute -bottom-2 -right-2 rounded-full w-8 h-8 p-0 bg-primary flex items-center justify-center cursor-pointer hover:scale-110 transition">
+                      <Camera className="w-4 h-4 text-white" />
+                      <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+                    </label>
                   </div>
 
                   <div className="flex-1">
@@ -141,10 +175,16 @@ export function ProfileModal({ open, onOpenChange }: ProfileModalProps) {
 
                 {isEditing && (
                   <div className="flex justify-end space-x-2 mt-4">
-                    <Button variant="outline" onClick={() => setIsEditing(false)}>
-                      Cancel
+                    <Button variant="outline" onClick={() => setIsEditing(false)}>Cancel</Button>
+                    <Button onClick={handleSave} disabled={isUpdating}>{isUpdating ? "Saving..." : "Save Changes"}</Button>
+                  </div>
+                )}
+
+                {!isEditing && (
+                  <div className="flex justify-end mt-4">
+                    <Button size="sm" onClick={() => setIsEditing(true)}>
+                      <Edit className="w-4 h-4 mr-1" /> Edit Profile
                     </Button>
-                    <Button onClick={() => setIsEditing(false)}>Save Changes</Button>
                   </div>
                 )}
               </CardContent>
