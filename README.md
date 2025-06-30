@@ -90,11 +90,11 @@ This project is a web-based real-time video calling platform enhanced with advan
    npm install
 
    # Install client dependencies
-   cd client
+   cd frontend
    npm install
 
    # Install server dependencies
-   cd ../server
+   cd backend
    npm install
    ```
 
@@ -119,13 +119,13 @@ This project is a web-based real-time video calling platform enhanced with advan
 ### 1. Start Backend
 In a terminal window:
 ```bash
-cd server
+cd backend
 npm run dev
 ```
 
 ### 2. Start Frontend
 In another terminal window:
 ```bash
-cd client
-npm start
+cd frontend
+npm run dev
 ```
