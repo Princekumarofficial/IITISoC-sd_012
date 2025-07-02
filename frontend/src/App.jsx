@@ -9,7 +9,7 @@ import MeetingPage from './pages/Meetingid'
 import AboutPage from './pages/About'
 import ContactForm from './pages/ContactUs'
 import ProfilePage from './pages/profile'
-
+import PreJoinPage from './pages/PreJoin'
 
 import { useAuthStore } from './store/useAuthStore'
 import { Loader } from 'lucide-react'
@@ -45,7 +45,8 @@ function App() {
         <Route path="/meeting/:id" element={authUser ? <MeetingPage /> : <Navigate to="/" />} />
         <Route path="/profilepage" element={authUser ? <ProfilePage /> : <Navigate to="/" />} />
         <Route path="/contactus" element={authUser ? <ContactForm /> : <Navigate to="/" />} />
-
+        <Route path="/preJoin/:id?" element={authUser ? <PreJoinPage />: <Navigate to="/" />} />
+          
       </Routes>
      
      

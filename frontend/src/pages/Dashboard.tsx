@@ -15,7 +15,7 @@ import { CameraManager } from "../components/Camera-manager"
 import { CallDetailsModal } from "../components/Call-details"
 import { Navbar } from "../components/Navbar"
 import { Footer } from "../components/Footer"
-
+import { createMeetingRoom } from "../utils/create-meeting";
 import { useUser } from "../context/UserContext";
 // Mock data for call history
 const callHistory = [
@@ -63,27 +63,29 @@ function DashboardContent() {
  const navigate = useNavigate();
   const { addNotification } = useNotifications()
 
-  const handleJoinMeeting = () => {
-    const meetingId = Math.random().toString(36).substring(7)
+  const handleJoinMeeting = async() => {
+   
+    
     addNotification({
       type: "info",
       title: "Joining Meeting",
-      message: `Connecting to meeting ${meetingId}...`,
+      message: `Setting camera and mic access`,
     })
     setTimeout(() => {
-      navigate(`/meeting/${meetingId}`);
+      navigate(`/preJoin`);
     }, 1000)
   }
 
-  const handleNewMeeting = () => {
-    const meetingId = Math.random().toString(36).substring(7)
+  const handleNewMeeting = async() => {
+    const meetingId = await createMeetingRoom();
     addNotification({
       type: "success",
       title: "Meeting Created",
       message: `New meeting ${meetingId} created successfully!`,
     })
+
     setTimeout(() => {
-      navigate(`/meeting/${meetingId}`);
+      navigate(`/preJoin/${meetingId}`);
     }, 1000)
   }
 

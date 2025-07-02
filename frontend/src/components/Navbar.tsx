@@ -29,8 +29,9 @@ import { useNotifications } from "../components/Notification-system";
 import { useAuthStore  } from "../store/useAuthStore"; // ✅ use authUser from zustand
 import { signOut } from "firebase/auth";
 import { auth } from "../service/firebase";
-
+import { createMeetingRoom } from "../utils/create-meeting";
 export function Navbar() {
+ 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [theme, setTheme] = useState("light");
 
@@ -46,29 +47,31 @@ export function Navbar() {
     document.documentElement.classList.toggle("dark", theme === "dark");
   }, [theme]);
 
-  const handleNewMeeting = () => {
-    const meetingId = Math.random().toString(36).substring(7);
+  const handleJoinMeeting = async() => {
+   
+    
+    addNotification({
+      type: "info",
+      title: "Joining Meeting",
+      message: `Setting camera and mic access`,
+    })
+    setTimeout(() => {
+      navigate(`/preJoin`);
+    }, 1000)
+  }
+
+  const handleNewMeeting = async() => {
+    const meetingId = await createMeetingRoom();
     addNotification({
       type: "success",
       title: "Meeting Created",
       message: `New meeting ${meetingId} created successfully!`,
-    });
-    setTimeout(() => {
-      navigate(`/meeting/${meetingId}`);
-    }, 1000);
-  };
+    })
 
-  const handleJoinMeeting = () => {
-    const meetingId = Math.random().toString(36).substring(7);
-    addNotification({
-      type: "info",
-      title: "Joining Meeting",
-      message: `Connecting to meeting ${meetingId}...`,
-    });
     setTimeout(() => {
-      navigate(`/meeting/${meetingId}`);
-    }, 1000);
-  };
+      navigate(`/preJoin/${meetingId}`);
+    }, 1000)
+  }
 
     const handleSignOut = async () => {
       try {
