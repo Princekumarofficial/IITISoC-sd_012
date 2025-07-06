@@ -16,7 +16,7 @@ import { CallDetailsModal } from "../components/Call-details"
 import { Navbar } from "../components/Navbar"
 import { Footer } from "../components/Footer"
 import { createMeetingRoom } from "../utils/create-meeting";
-import { useUser } from "../context/UserContext";
+import { useAuthStore } from "../store/useAuthStore";
 // Mock data for call history
 const callHistory = [
   {
@@ -52,7 +52,7 @@ const callHistory = [
 ]
 
 function DashboardContent() {
-  const { user, logout } = useUser();
+  const { authUser} = useAuthStore();
 
   const [activeTab, setActiveTab] = useState("history")
   const [showSettings, setShowSettings] = useState(false)
@@ -77,7 +77,7 @@ function DashboardContent() {
   }
 
   const handleNewMeeting = async() => {
-    const meetingId = await createMeetingRoom();
+    const meetingId = await createMeetingRoom(authUser._id);
     addNotification({
       type: "success",
       title: "Meeting Created",

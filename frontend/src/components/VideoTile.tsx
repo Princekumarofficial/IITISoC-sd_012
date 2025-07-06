@@ -65,7 +65,7 @@ export const VideoTile: React.FC<VideoTileProps> = ({
           <div className="text-6xl animate-pulse">🦸‍♂️</div>
         </div>
       )}
-      {showEmoji && emotion && (
+      {showEmoji && emotion && (!isLocal || enableLocalEmotionDetection) &&(
         <div className="absolute top-2 right-2 text-3xl animate-bounce">{emotion}</div>
       )}
       <div className="absolute bottom-2 left-2 text-white bg-black/60 px-2 py-1 text-xs rounded">

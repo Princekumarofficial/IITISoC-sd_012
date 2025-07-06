@@ -89,9 +89,17 @@ function MeetingContent() {
   const [activeTab, setActiveTab] = useState("emotions")
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [meetingDuration, setMeetingDuration] = useState(0)
+  const [userEmotions, setUserEmotions] = useState<{
+    [userId: string]: { emotion: string; confidence: number };
+  }>({});
   const navigate = useNavigate();
   const { addNotification } = useNotifications()
-  const { localStream, remoteStreams, toggleMic, toggleCam } = useSFUClient(id || "");
+  const { localStream, remoteStreams, toggleMic, toggleCam, sendEmotionUpdate } = useSFUClient(id || "", (userId, emotion, confidence) => {
+    setUserEmotions((prev) => ({
+      ...prev,
+      [userId]: { emotion, confidence },
+    }));
+  });
   const [localEmotion, setLocalEmotion] = useState<string>("");
   const [localEmotionConfidence, setLocalEmotionConfidence] = useState<number>(0);
   // Meeting timer
@@ -113,9 +121,7 @@ function MeetingContent() {
     console.log("Local emotion:", emotion, confidence.toFixed(2));
     setLocalEmotion(emotion);
     setLocalEmotionConfidence(confidence);
-
-    // Optionally send to backend or WebSocket:
-    // sendEmotionUpdateToServer(emotion, confidence);
+    sendEmotionUpdate(id || null, emotion , confidence)
   };
 
 
@@ -267,15 +273,15 @@ function MeetingContent() {
                 </div>
 
                 {/* Other participants */}
-                {remoteStreams.map((remote) => (
+                {remoteStreams.map((remote) =>   (
                   <VideoTile
                     key={remote.peerId}
                     stream={remote.stream}
                     name={remote.peerId}
                     isLocal={false}
                     muted={false}
-                    emotion="😃"
-                    emotionConfidence={0.9}
+                    emotion={getEmojiFromEmotion(userEmotions[remote.peerId]?.emotion)}
+                    emotionConfidence={userEmotions[remote.peerId]?.confidence}
                     showEmoji={isEmojiOverlayOn}
                     showFaceSwap={isFaceSwapOn}
                   />

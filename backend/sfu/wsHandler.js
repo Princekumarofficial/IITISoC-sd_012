@@ -2,12 +2,39 @@ import { mediaCodecs } from "./mediasoup-config.js";
 import { createRoom, getRoom, addPeer, getPeer, cleanupPeer } from "./rooms.js";
 
 export default async function handleWebSocketConnection(ws, worker) {
-  const peerId = Date.now().toString();
+  let currentPeerId = null;
   let roomId = null;
 
   ws.on("message", async (message) => {
     const msg = JSON.parse(message);
     const { type, data } = msg;
+    const peerId = data?.peerId;
+
+    console.log("Received message:", type, data);
+    if (!peerId && type !== "createRoom") return; // Require peerId for all except createRoom
+    currentPeerId = peerId || currentPeerId;
+    
+    if (type === "emotion_update") {
+      
+      if (!roomId) return;
+
+      const room = getRoom(roomId);
+      if (!room) return;
+
+      const { emotion, confidence } = data;
+      for (const [otherId, otherPeer] of room.peers) {
+        if (otherId !== peerId && otherPeer.ws.readyState === ws.OPEN) {
+          otherPeer.ws.send(JSON.stringify({
+            type: "emotion_update",
+            data: {
+              userId: peerId,
+              emotion,
+              confidence,
+            },
+          }));
+        }
+      }
+    }
 
     if (type === "createRoom") {
       const router = await worker.createRouter({ mediaCodecs });
@@ -40,7 +67,7 @@ export default async function handleWebSocketConnection(ws, worker) {
         },
       }));
     }
-
+    
     if (type === "leaveRoom") {
       cleanupPeer(roomId, peerId);
     }
@@ -73,25 +100,25 @@ export default async function handleWebSocketConnection(ws, worker) {
     }
 
     if (type === "produce") {
-        const { kind, rtpParameters } = data;
-        const peer = getPeer(roomId, peerId);
-        const producer = await peer.sendTransport.produce({ kind, rtpParameters });
-        
-        peer.producers = peer.producers || [];
-        peer.producers.push(producer);
-        
-        ws.send(JSON.stringify({ type: "produced", data: { id: producer.id } }));
-        
-        const room = getRoom(roomId);
-        for (const [otherId, otherPeer] of room.peers) {
-            if (otherId !== peerId) {
-                otherPeer.ws.send(JSON.stringify({
-                    type: "newProducer",
-                    data: { producerId: producer.id, peerId },
-                }));
-            }
+      const { kind, rtpParameters } = data;
+      const peer = getPeer(roomId, peerId);
+      const producer = await peer.sendTransport.produce({ kind, rtpParameters });
+
+      peer.producers = peer.producers || [];
+      peer.producers.push(producer);
+
+      ws.send(JSON.stringify({ type: "produced", data: { id: producer.id } }));
+
+      const room = getRoom(roomId);
+      for (const [otherId, otherPeer] of room.peers) {
+        if (otherId !== peerId) {
+          otherPeer.ws.send(JSON.stringify({
+            type: "newProducer",
+            data: { producerId: producer.id, peerId },
+          }));
         }
-        console.log(`📡 Notifying peers of new producer ${producer.id} from ${peerId}`);
+      }
+      console.log(`📡 Notifying peers of new producer ${producer.id} from ${peerId}`);
     }
 
     if (type === "createRecvTransport") {
@@ -163,9 +190,9 @@ export default async function handleWebSocketConnection(ws, worker) {
       }
       console.log(`✅ Consumers created for ${peerId}:`, consumers.map(c => c.id));
       ws.send(JSON.stringify({ type: "consumersCreated", data: consumers }));
-
     }
+
   });
 
-  ws.on("close", () => cleanupPeer(roomId, peerId));
+  ws.on("close", () => cleanupPeer(roomId, currentPeerId));
 }

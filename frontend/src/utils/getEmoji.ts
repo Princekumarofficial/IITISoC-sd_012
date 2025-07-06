@@ -20,7 +20,7 @@ export function getEmojiFromEmotion(emotion: string): string {
     surprised: "😲",
   };
 
-  const lowerEmotion = emotion.toLowerCase() as EmotionType;
+  const lowerEmotion = emotion?.toLowerCase() as EmotionType;
 
   return emojiMap[lowerEmotion] ?? "❓";
 }

@@ -44,4 +44,21 @@ export function cleanupPeer(roomId, peerId) {
   }
 
   console.log(`Peer ${peerId} left and cleaned up from room ${roomId}`);
+
+  // if (room.peers.size === 0) {
+  //   deleteRoom(roomId);
+  // }
+  
+}
+
+
+export function deleteRoom(roomId) {
+  const room = rooms.get(roomId);
+  if (!room) return;
+
+  // Close router
+  room.router.close();
+
+  rooms.delete(roomId);
+  console.log(`🧹 Room ${roomId} deleted`);
 }

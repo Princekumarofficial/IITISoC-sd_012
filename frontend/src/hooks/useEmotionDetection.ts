@@ -15,6 +15,11 @@ export function useEmotionDetection(
 
     const intervalRef = useRef<number | null>(null);
 
+    const enabledRef = useRef(enabled);
+    useEffect(() => {
+        enabledRef.current = enabled;
+    }, [enabled]);
+
     useEffect(() => {
         let cancelled = false;
 
@@ -27,31 +32,35 @@ export function useEmotionDetection(
                     return;
                 }
 
+                if (enabled) {
+                    intervalRef.current = window.setInterval(async () => {
+                        const video = videoRef.current;
 
-                intervalRef.current = window.setInterval(async () => {
-                    const video = videoRef.current;
-
-                    if (!video || video.readyState !== 4) {
-                        console.log("Video not ready:", video?.readyState);
-                        return;
-                    }
-
-                    try {
-                        const detections = await faceapi
-                            .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions())
-                            .withFaceLandmarks()
-                            .withFaceExpressions();
-
-                        if (detections.length > 0) {
-                            const expressions = detections[0].expressions;
-                            const sorted = Object.entries(expressions).sort((a, b) => b[1] - a[1]);
-                            const [emotion, confidence] = sorted[0];
-                            onEmotionDetected({ emotion, confidence });
+                        if (!video || video.readyState !== 4) {
+                            console.log("Video not ready:", video?.readyState);
+                            return;
                         }
-                    } catch (err) {
-                        console.error("Emotion detection error:", err);
-                    }
-                }, 2000);
+
+                        if (!enabledRef.current) return;
+
+                        try {
+                            const detections = await faceapi
+                                .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions())
+                                .withFaceLandmarks()
+                                .withFaceExpressions();
+
+                            if (detections.length > 0) {
+                                const expressions = detections[0].expressions;
+                                const sorted = Object.entries(expressions).sort((a, b) => b[1] - a[1]);
+                                const [emotion, confidence] = sorted[0];
+                                onEmotionDetected({ emotion, confidence });
+                            }
+                            
+                        } catch (err) {
+                            console.error("Emotion detection error:", err);
+                        }
+                    }, 2000);
+                }
             } catch (e) {
                 console.error("Model loading failed, detection skipped.");
             }
