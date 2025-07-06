@@ -8,6 +8,7 @@ export interface RemoteStream {
 }
 
 export function useSFUClient(roomId: string) {
+   
     const [localStream, setLocalStream] = useState<MediaStream | null>(null);
     const [remoteStreams, setRemoteStreams] = useState<RemoteStream[]>([]);
     const { addNotification } = useNotifications();

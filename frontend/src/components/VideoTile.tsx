@@ -1,5 +1,5 @@
-// components/VideoTile.tsx
 import React, { useEffect, useRef } from "react";
+import { useEmotionDetection } from "../hooks/useEmotionDetection";
 
 export interface VideoTileProps {
   stream: MediaStream;
@@ -12,6 +12,8 @@ export interface VideoTileProps {
   showFaceSwap?: boolean;
   className?: string;
   style?: React.CSSProperties;
+  onLocalEmotionDetected?: (data: { emotion: string; confidence: number }) => void;
+  enableLocalEmotionDetection?: boolean;
 }
 
 export const VideoTile: React.FC<VideoTileProps> = ({
@@ -25,14 +27,26 @@ export const VideoTile: React.FC<VideoTileProps> = ({
   showFaceSwap = false,
   className = "",
   style = {},
+  onLocalEmotionDetected,
+  enableLocalEmotionDetection = false,
 }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
 
+  // Attach stream
   useEffect(() => {
     if (videoRef.current && stream) {
       videoRef.current.srcObject = stream;
     }
   }, [stream]);
+
+  // Hook: Only for local video
+  useEmotionDetection(
+    videoRef,
+    isLocal && enableLocalEmotionDetection,
+    (data) => {
+      if (onLocalEmotionDetected) onLocalEmotionDetected(data);
+    }
+  );
 
   return (
     <div
