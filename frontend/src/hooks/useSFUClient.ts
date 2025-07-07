@@ -3,6 +3,7 @@ import * as mediasoupClient from "mediasoup-client";
 import { useNotifications } from "../components/Notification-system";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/useAuthStore";
+import type { FaceLandmarks68 } from "@vladmandic/face-api";
 
 export interface RemoteStream {
     peerId: string;
@@ -11,7 +12,7 @@ export interface RemoteStream {
 
 export function useSFUClient(
     roomId: string,
-    onEmotionUpdate: (userId: string, emotion: string, confidence: number) => void
+    onEmotionUpdate: (userId: string, emotion: string, confidence: number , landmarks: FaceLandmarks68 , isOverlayOn : boolean) => void
 ) {
     const { authUser } = useAuthStore();
     const [localStream, setLocalStream] = useState<MediaStream | null>(null);
@@ -100,9 +101,9 @@ export function useSFUClient(
             }
 
             if (type === "emotion_update") {
-                const { userId, emotion, confidence } = data;
-                if (userId && emotion && typeof confidence === "number") {
-                    onEmotionUpdate(userId, emotion, confidence);
+                const { userId, emotion, confidence , landmarks, isOverlayOn } = data;
+                if (userId && emotion && typeof confidence === "number" && landmarks && isOverlayOn) {
+                    onEmotionUpdate(userId, emotion, confidence, landmarks, isOverlayOn);
                 }
             }
 
@@ -252,9 +253,9 @@ export function useSFUClient(
         }
     };
 
-    const sendEmotionUpdate = (roomId: string | null, emotion: string, confidence: number) => {
-        console.log("WebSocket readyState:", wsRef.current?.readyState);
-        console.log("roomId:", roomId, "userId:", authUser?._id);
+    const sendEmotionUpdate = (roomId: string | null, emotion: string, confidence: number , landmarks : FaceLandmarks68, isOverlayOn:boolean) => {
+        // console.log("WebSocket readyState:", wsRef.current?.readyState);
+        // console.log("roomId:", roomId, "userId:", authUser?._id);
         wsRef.current?.send(
             JSON.stringify({
                 type: "emotion_update",
@@ -262,6 +263,8 @@ export function useSFUClient(
                     roomId,
                     emotion,
                     confidence,
+                    landmarks,
+                    isOverlayOn,
                     peerId: authUser._id,
                 },
             })

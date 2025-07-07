@@ -21,7 +21,7 @@ export default async function handleWebSocketConnection(ws, worker) {
       const room = getRoom(roomId);
       if (!room) return;
 
-      const { emotion, confidence } = data;
+      const { emotion, confidence , landmarks , isOverlayOn } = data;
       for (const [otherId, otherPeer] of room.peers) {
         if (otherId !== peerId && otherPeer.ws.readyState === ws.OPEN) {
           otherPeer.ws.send(JSON.stringify({
@@ -30,6 +30,8 @@ export default async function handleWebSocketConnection(ws, worker) {
               userId: peerId,
               emotion,
               confidence,
+              landmarks,
+              isOverlayOn
             },
           }));
         }

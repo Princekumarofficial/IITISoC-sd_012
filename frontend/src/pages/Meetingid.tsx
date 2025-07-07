@@ -33,6 +33,7 @@ import { useSFUClient } from "../hooks/useSFUClient";
 import { NotificationProvider, useNotifications } from "../components/Notification-system"
 import { getEmojiFromEmotion } from "../utils/getEmoji";
 import { useParams } from "react-router-dom";
+import type { FaceLandmarks68 } from "@vladmandic/face-api";
 // Mock participants data
 const participants = [
   {
@@ -83,6 +84,7 @@ function MeetingContent() {
   const [isVideoOn, setIsVideoOn] = useState(true)
   const [isEmotionDetectionOn, setIsEmotionDetectionOn] = useState(true)
   const [isEmojiOverlayOn, setIsEmojiOverlayOn] = useState(true)
+  const isEmojiOverlayOnRef = useRef(isEmojiOverlayOn);
   const [isFaceSwapOn, setIsFaceSwapOn] = useState(false)
   const [isRecording, setIsRecording] = useState(false)
   const [showSidebar, setShowSidebar] = useState(true)
@@ -90,18 +92,20 @@ function MeetingContent() {
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [meetingDuration, setMeetingDuration] = useState(0)
   const [userEmotions, setUserEmotions] = useState<{
-    [userId: string]: { emotion: string; confidence: number };
+    [userId: string]: { emotion: string; confidence: number , landmarks: FaceLandmarks68 , isOverlayOn : boolean};
   }>({});
   const navigate = useNavigate();
   const { addNotification } = useNotifications()
-  const { localStream, remoteStreams, toggleMic, toggleCam, sendEmotionUpdate } = useSFUClient(id || "", (userId, emotion, confidence) => {
+  const { localStream, remoteStreams, toggleMic, toggleCam, sendEmotionUpdate } = useSFUClient(id || "", (userId, emotion, confidence, landmarks, isOverlayOn) => {
     setUserEmotions((prev) => ({
       ...prev,
-      [userId]: { emotion, confidence },
+      [userId]: { emotion, confidence, landmarks , isOverlayOn},
     }));
   });
   const [localEmotion, setLocalEmotion] = useState<string>("");
   const [localEmotionConfidence, setLocalEmotionConfidence] = useState<number>(0);
+  const [localLandmarks, setlocalLandmarks] = useState<FaceLandmarks68| null>(null);
+  
   // Meeting timer
   useEffect(() => {
     const timer = setInterval(() => {
@@ -111,18 +115,27 @@ function MeetingContent() {
     return () => clearInterval(timer)
   }, [])
 
-  const handleLocalEmotionDetected = ({
-    emotion,
-    confidence,
-  }: {
-    emotion: string;
-    confidence: number;
-  }) => {
-    console.log("Local emotion:", emotion, confidence.toFixed(2));
-    setLocalEmotion(emotion);
-    setLocalEmotionConfidence(confidence);
-    sendEmotionUpdate(id || null, emotion , confidence)
-  };
+  useEffect(() => {
+    isEmojiOverlayOnRef.current = isEmojiOverlayOn;
+  }, [isEmojiOverlayOn]);
+
+
+const handleLocalEmotionDetected = ({
+  emotion,
+  confidence,
+  landmarks
+}: {
+  emotion: string;
+  confidence: number;
+  landmarks: FaceLandmarks68;
+}) => {
+  console.log("Local emotion:", emotion, confidence.toFixed(2));
+  setLocalEmotion(emotion);
+  setLocalEmotionConfidence(confidence);
+  setlocalLandmarks(landmarks);
+  sendEmotionUpdate(id || null, emotion , confidence, landmarks , isEmojiOverlayOnRef.current);
+ 
+};
 
 
 
@@ -259,10 +272,11 @@ function MeetingContent() {
                       muted
                       emotion={getEmojiFromEmotion(localEmotion)}
                       emotionConfidence={localEmotionConfidence}
-                      showEmoji={isEmojiOverlayOn}
+                      showEmoji={isEmojiOverlayOnRef.current}
                       showFaceSwap={isFaceSwapOn}
                       onLocalEmotionDetected={handleLocalEmotionDetected}
                       enableLocalEmotionDetection={isEmotionDetectionOn}
+                      landmarks={localLandmarks}
                     />
                   )}
                   {isFaceSwapOn && (
@@ -282,8 +296,9 @@ function MeetingContent() {
                     muted={false}
                     emotion={getEmojiFromEmotion(userEmotions[remote.peerId]?.emotion)}
                     emotionConfidence={userEmotions[remote.peerId]?.confidence}
-                    showEmoji={isEmojiOverlayOn}
+                    showEmoji={userEmotions[remote.peerId]?.isOverlayOn}
                     showFaceSwap={isFaceSwapOn}
+                    landmarks={userEmotions[remote.peerId]?.landmarks}
                   />
                 ))}
               </div>

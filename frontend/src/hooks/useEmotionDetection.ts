@@ -5,6 +5,7 @@ import { loadFaceApiModels } from "../utils/faceapi-loader"
 interface EmotionData {
     emotion: string;
     confidence: number;
+    landmarks: faceapi.FaceLandmarks68;
 }
 
 export function useEmotionDetection(
@@ -27,6 +28,8 @@ export function useEmotionDetection(
             try {
                 await loadFaceApiModels();
 
+            
+                
                 if (!enabled || !videoRef.current) {
                     console.warn("🚫 Not starting detection: Disabled or videoRef missing.");
                     return;
@@ -49,13 +52,17 @@ export function useEmotionDetection(
                                 .withFaceLandmarks()
                                 .withFaceExpressions();
 
+
                             if (detections.length > 0) {
                                 const expressions = detections[0].expressions;
+                                const landmarks = detections[0].landmarks;
+                                // console.log(detections[0].landmarks);
                                 const sorted = Object.entries(expressions).sort((a, b) => b[1] - a[1]);
                                 const [emotion, confidence] = sorted[0];
-                                onEmotionDetected({ emotion, confidence });
+                                onEmotionDetected({ emotion, confidence, landmarks });
+                                // onEmotionDetected({ emotion, confidence});
                             }
-                            
+
                         } catch (err) {
                             console.error("Emotion detection error:", err);
                         }
@@ -66,8 +73,9 @@ export function useEmotionDetection(
             }
         };
 
-        if (enabled && videoRef.current) {
-            startDetection();
+
+        if (enabled && videoRef.current && !intervalRef.current) {
+            startDetection(); 
         }
 
         return () => {
