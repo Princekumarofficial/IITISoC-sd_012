@@ -22,7 +22,7 @@ export function useSFUClient(roomId: string) {
     const navigate = useNavigate();
 
     useEffect(() => {
-        const ws = new WebSocket("ws://localhost:8000");
+        const ws = new WebSocket("ws://localhost:8000/mediasoup");
         wsRef.current = ws;
 
         ws.onopen = () => {
@@ -42,7 +42,7 @@ export function useSFUClient(roomId: string) {
                 device.current = new mediasoupClient.Device();
                 await device.current.load({ routerRtpCapabilities: data.rtpCapabilities });
                 existingProducers.current = data.producers || [];
-
+ 
                 for (const { producerId, peerId } of existingProducers.current) {
                     producerPeerMap.current.set(producerId, peerId);
                 }

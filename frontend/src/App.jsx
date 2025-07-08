@@ -18,11 +18,13 @@ import { Loader } from 'lucide-react'
 function App() {
   const { authUser, checkAuth, isCheckingAuth, onlineUsers } = useAuthStore();
  
+  console.log({ onlineUsers  } , " online user from app.jsx");
+  
   useEffect(() => {
     checkAuth();
   }, [checkAuth]);
 
-   console.log("authUser from App.jsx:", authUser);
+   
    
   if (isCheckingAuth && !authUser)
     return (

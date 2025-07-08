@@ -14,16 +14,13 @@ export const getUsersForSidebar = async (req, res) => {
 };
 export const saveuser = async (req, res) =>{
    try {
-      const { username, avatar, email , isOnline,  type } = req.body;
+      const {userID, username, avatar, email  } = req.body;
 
       const newChatListItem = new ChatList({
+      userID : userID,
       username : username,
       avatar: avatar || "/profile.jpg",
       email : email ,
-      isOnline: isOnline || false,
-      isPinned: false,
-      
-      type: type || "direct"
     });
     await newChatListItem.save();
 

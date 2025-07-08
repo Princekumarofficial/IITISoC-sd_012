@@ -26,14 +26,10 @@ export const authGoogle = async(req , res) => {
       // ✅ Create a ChatList entry for this new user
         const newChatList = new ChatList({
           userID : user._id ,
-          name: name,
-          avatar: photoURL || "/profile.jpg",
+          username: name,
+           avatar: photoURL && photoURL.trim() !== "" ? photoURL : "/profile.jpg",
           email : email,
          
-          isOnline: true,            // optional: mark as online if you track status
-          isPinned: false,
-         
-          type: "direct"
         });
         await newChatList.save();
 

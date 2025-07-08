@@ -1,6 +1,6 @@
 export function createMeetingRoom(): Promise<string> {
   return new Promise((resolve, reject) => {
-    const ws = new WebSocket("ws://localhost:8000");
+    const ws = new WebSocket("ws://localhost:8000/mediasoup");
 
     ws.onopen = () => {
       ws.send(JSON.stringify({ type: "createRoom" }));

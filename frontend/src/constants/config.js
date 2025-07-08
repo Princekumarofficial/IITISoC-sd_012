@@ -36,9 +36,11 @@ export const SERVICE_URLS = {
   logout: {url : '/logout' , method : 'POST'} ,
   getUsersForSidebar : {url : '/chatlist' , method : 'GET'},
   
-  sendMessage:{
-    url : `/send` , method : 'POST'
-  } ,
+ sendMessage: ({ id, text , image }) => ({
+  url: `/send/${id}`,
+  method: "POST",
+  data: { text , image},
+}),
   getMessages : (id) => ({ url : `/create/${id}` , method : 'GET'}),
 
   // newChat: { url: '/newChat', method: 'POST' },

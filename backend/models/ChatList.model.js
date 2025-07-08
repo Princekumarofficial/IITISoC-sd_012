@@ -16,13 +16,6 @@ const ChatListSchema = new Schema({
     email : {
         type : String ,
     },
-    isOnline : {
-        type : Boolean,
-    },
-    isPinned: { type: Boolean, default: false },
-    //  participantsName: [String],
-    //  participantsID: [String],
-     type: { type: String, enum: ["direct", "group"], default: "direct" },
    
 } , {timestamps : true});
 const ChatList = mongoose.model("ChatList" ,ChatListSchema)

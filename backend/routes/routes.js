@@ -24,7 +24,7 @@ router.get("/chatlist" ,getUsersForSidebar);
 router.post("/saveuser" , saveuser);
 router.get("/create/:id", protectRoute, getMessages);
 
-router.post("/send", protectRoute, sendMessage);
+router.post("/send/:id", protectRoute, sendMessage);
 
 
 //routes for contactus

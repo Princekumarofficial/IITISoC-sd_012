@@ -1,6 +1,5 @@
 "use client"
-
-import React, { useState, useEffect } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/Card"
 import { Button } from "../ui/Button"
 import { Input } from "../ui/Input"
@@ -11,53 +10,43 @@ import { Search, Plus, MoreVertical, Pin } from "lucide-react"
 import { useAuthStore } from "../../store/useAuthStore"
 import { useChatStore } from "../../store/useChatStore"
 
-interface ChatListProps {
-  onChatSelect: (chat: any) => void
-  selectedChatId?: string 
-}
-
-export function ChatList({ onChatSelect, selectedChatId }: ChatListProps) {
-  const { getUsers, users, setSelectedUser } = useChatStore()
+export function ChatList() {
+  const { getUsers, users, selectedUser, setSelectedUser } = useChatStore()
   const { onlineUsers } = useAuthStore()
   const [searchQuery, setSearchQuery] = useState("")
-  const [pinnedChats, setPinnedChats] = useState<{ [id: string]: boolean }>({})
+ 
+  const [showOnlineOnly, setShowOnlineOnly] = useState(false)
 
   useEffect(() => {
     getUsers()
   }, [getUsers])
 
-  // Filter and map users
-  const filteredChats = users
+  const filteredUsers = users
     .filter((user) =>
-      user.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.email?.toLowerCase().includes(searchQuery.toLowerCase())
+      (!showOnlineOnly || onlineUsers.includes(user._id)) &&
+      (
+        user.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        user.email?.toLowerCase().includes(searchQuery.toLowerCase())
+      )
     )
     .map((user) => ({
-      id: user._id,
-      name: user.username,
+      _id: user.userID,
+      username: user.username,
       avatar: user.avatar || "/profile.jpg",
       email: user.email || "",
-      isOnline: onlineUsers.includes(user._id),
-      isPinned: pinnedChats[user._id] || false,
-      type: user.type || "direct"
+      isOnline: onlineUsers.includes(user.userID),
+      
     }))
 
-  // Sort pinned first
-  const sortedChats = [...filteredChats].sort((a, b) => {
+  const sortedUsers = [...filteredUsers].sort((a, b) => {
     if (a.isPinned && !b.isPinned) return -1
     if (!a.isPinned && b.isPinned) return 1
     return 0
   })
 
-  const handleChatClick = (chat: any) => {
-    onChatSelect(chat)
-    setSelectedUser(chat)
-  }
 
-  const togglePin = (chatId: string, e: React.MouseEvent) => {
-    e.stopPropagation()
-    setPinnedChats((prev) => ({ ...prev, [chatId]: !prev[chatId] }))
-  }
+
+
 
   return (
     <Card className="h-full glass my-5">
@@ -73,7 +62,19 @@ export function ChatList({ onChatSelect, selectedChatId }: ChatListProps) {
             </Button>
           </div>
         </div>
-        <div className="relative ">
+        <div className="mt-2 flex items-center gap-2">
+          <label className="cursor-pointer flex items-center gap-2 text-xs">
+            <input
+              type="checkbox"
+              checked={showOnlineOnly}
+              onChange={(e) => setShowOnlineOnly(e.target.checked)}
+              className="checkbox checkbox-sm"
+            />
+            Show online only
+          </label>
+          <span className="text-xs text-muted-foreground">({onlineUsers.length} online)</span>
+        </div>
+        <div className="relative mt-2">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground " />
           <Input
             placeholder="Search users..."
@@ -86,50 +87,46 @@ export function ChatList({ onChatSelect, selectedChatId }: ChatListProps) {
 
       <CardContent className="p-0">
         <ScrollArea className="h-[calc(100vh-200px)] custom-scrollbar">
-          <div className="space-y-1 p-2 ">
-            {sortedChats.map((chat) => (
+          <div className="space-y-1 p-2">
+            {sortedUsers.map((user) => (
               <div
-                key={chat.id}
-                onClick={() => handleChatClick(chat)}
+                key={user._id}
+                onClick={() => setSelectedUser(user) }
                 className={`p-3 rounded-lg cursor-pointer transition-all hover:bg-muted/50 group ${
-                  selectedChatId === chat.id ? "bg-primary/10 border border-primary/20" : ""
+                  selectedUser?._id === user.id ? "bg-primary/10 border border-primary/20" : ""
                 }`}
               >
                 <div className="flex items-center space-x-3 glow rounded-lg">
-                  <div className="relative ">
+                  <div className="relative">
                     <Avatar className="w-12 h-12">
-                      <AvatarImage src={chat.avatar} />
+                      <AvatarImage src={user.avatar} />
                       <AvatarFallback className="bg-gradient-to-br from-primary to-blue-600 text-white">
-                        {chat.name
+                        {user.username
                           .split(" ")
                           .map((n) => n[0])
                           .join("")}
                       </AvatarFallback>
                     </Avatar>
-                    {chat.isOnline && (
+                    {user.isOnline && (
                       <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-background rounded-full" />
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between mb-1">
                       <div className="flex items-center space-x-2">
-                        <h3 className="font-semibold text-sm truncate">{chat.name}</h3>
-                        {chat.isPinned && <Pin className="w-3 h-3 text-muted-foreground" />}
+                        <h3 className="font-semibold text-sm truncate">{user.username}</h3>
+                       
                       </div>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={(e) => togglePin(chat.id, e)}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity w-6 h-6 p-0"
-                      >
-                        <Pin className="w-3 h-3" />
-                      </Button>
+
                     </div>
-                    <p className="text-xs text-muted-foreground truncate">{chat.email}</p>
+                    <p className="text-xs text-muted-foreground truncate">{user.email}</p>
                   </div>
                 </div>
               </div>
             ))}
+            {sortedUsers.length === 0 && (
+              <div className="text-center text-muted-foreground py-4 text-sm">No users found</div>
+            )}
           </div>
         </ScrollArea>
       </CardContent>
