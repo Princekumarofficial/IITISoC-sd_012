@@ -30,6 +30,7 @@ import { useAuthStore  } from "../store/useAuthStore"; // ✅ use authUser from 
 import { signOut } from "firebase/auth";
 import { auth } from "../service/firebase";
 import { createMeetingRoom } from "../utils/create-meeting";
+
 export function Navbar() {
  
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -61,7 +62,7 @@ export function Navbar() {
   }
 
   const handleNewMeeting = async() => {
-    const meetingId = await createMeetingRoom();
+    const meetingId = await createMeetingRoom(authUser._id);
     addNotification({
       type: "success",
       title: "Meeting Created",

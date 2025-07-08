@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useNavigate } from "react-router-dom";
 import { Navbar } from "../components/Navbar";
 import { Button } from "../components/ui/Button"
@@ -31,8 +31,9 @@ import { ChatPanel } from "../components/Chat-panel"
 import { TailCursor } from "../components/Tail-cursor"
 import { useSFUClient } from "../hooks/useSFUClient";
 import { NotificationProvider, useNotifications } from "../components/Notification-system"
-import { CameraManager } from "../components/Camera-manager"
+import { getEmojiFromEmotion } from "../utils/getEmoji";
 import { useParams } from "react-router-dom";
+import type { FaceLandmarks68 } from "@vladmandic/face-api";
 // Mock participants data
 const participants = [
   {
@@ -41,7 +42,7 @@ const participants = [
     isLocal: true,
     isMuted: false,
     isVideoOn: true,
-    emotion: "😊",
+    emotion: "",
     emotionConfidence: 0.85,
     stream: null,
   },
@@ -51,7 +52,7 @@ const participants = [
     isLocal: false,
     isMuted: false,
     isVideoOn: true,
-    emotion: "🤔",
+    emotion: "",
     emotionConfidence: 0.72,
     stream: null,
   },
@@ -83,18 +84,28 @@ function MeetingContent() {
   const [isVideoOn, setIsVideoOn] = useState(true)
   const [isEmotionDetectionOn, setIsEmotionDetectionOn] = useState(true)
   const [isEmojiOverlayOn, setIsEmojiOverlayOn] = useState(true)
+  const isEmojiOverlayOnRef = useRef(isEmojiOverlayOn);
   const [isFaceSwapOn, setIsFaceSwapOn] = useState(false)
   const [isRecording, setIsRecording] = useState(false)
   const [showSidebar, setShowSidebar] = useState(true)
   const [activeTab, setActiveTab] = useState("emotions")
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [meetingDuration, setMeetingDuration] = useState(0)
-  // const [localStream, setLocalStream] = useState<MediaStream | null>(null)
-  const [showEmojiRain, setShowEmojiRain] = useState(false)
+  const [userEmotions, setUserEmotions] = useState<{
+    [userId: string]: { emotion: string; confidence: number , landmarks: FaceLandmarks68 , isOverlayOn : boolean};
+  }>({});
   const navigate = useNavigate();
   const { addNotification } = useNotifications()
-  const { localStream, remoteStreams, toggleMic, toggleCam } = useSFUClient(id || "");
-
+  const { localStream, remoteStreams, toggleMic, toggleCam, sendEmotionUpdate } = useSFUClient(id || "", (userId, emotion, confidence, landmarks, isOverlayOn) => {
+    setUserEmotions((prev) => ({
+      ...prev,
+      [userId]: { emotion, confidence, landmarks , isOverlayOn},
+    }));
+  });
+  const [localEmotion, setLocalEmotion] = useState<string>("");
+  const [localEmotionConfidence, setLocalEmotionConfidence] = useState<number>(0);
+  const [localLandmarks, setlocalLandmarks] = useState<FaceLandmarks68| null>(null);
+  
   // Meeting timer
   useEffect(() => {
     const timer = setInterval(() => {
@@ -104,6 +115,30 @@ function MeetingContent() {
     return () => clearInterval(timer)
   }, [])
 
+  useEffect(() => {
+    isEmojiOverlayOnRef.current = isEmojiOverlayOn;
+  }, [isEmojiOverlayOn]);
+
+
+const handleLocalEmotionDetected = ({
+  emotion,
+  confidence,
+  landmarks
+}: {
+  emotion: string;
+  confidence: number;
+  landmarks: FaceLandmarks68;
+}) => {
+  console.log("Local emotion:", emotion, confidence.toFixed(2));
+  setLocalEmotion(emotion);
+  setLocalEmotionConfidence(confidence);
+  setlocalLandmarks(landmarks);
+  sendEmotionUpdate(id || null, emotion , confidence, landmarks , isEmojiOverlayOnRef.current);
+ 
+};
+
+
+
   const formatDuration = (seconds: number) => {
     const hours = Math.floor(seconds / 3600)
     const minutes = Math.floor((seconds % 3600) / 60)
@@ -112,11 +147,11 @@ function MeetingContent() {
   }
 
   const stopMediaTracks = (stream: MediaStream | null) => {
-  if (!stream) return;
-  stream.getTracks().forEach((track) => {
-    track.stop();
-  });
-};
+    if (!stream) return;
+    stream.getTracks().forEach((track) => {
+      track.stop();
+    });
+  };
 
   const handleLeaveMeeting = () => {
     addNotification({
@@ -157,14 +192,6 @@ function MeetingContent() {
     })
   }
 
-  // const handleStreamReady = (stream: MediaStream) => {
-  //   setLocalStream(stream)
-  //   addNotification({
-  //     type: "success",
-  //     title: "Camera Connected",
-  //     message: "Your camera is now active in the meeting",
-  //   })
-  // }
 
 
   useEffect(() => {
@@ -176,24 +203,6 @@ function MeetingContent() {
     return () => document.removeEventListener("fullscreenchange", handleFullscreenChange)
   }, [])
 
-  // Mock emotion updates
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (isEmotionDetectionOn && Math.random() > 0.7) {
-        const emotions = ["😊", "😄", "🤔", "😮", "👍", "👏", "💡", "🎉", "❤️", "🔥", "✨", "🚀"]
-        const randomEmotion = emotions[Math.floor(Math.random() * emotions.length)]
-
-        addNotification({
-          type: "info",
-          title: "Emotion Detected",
-          message: `${randomEmotion} detected with high confidence!`,
-          duration: 2000,
-        })
-      }
-    }, 8000)
-
-    return () => clearInterval(interval)
-  }, [isEmotionDetectionOn, addNotification])
 
   return (
     <>
@@ -218,7 +227,7 @@ function MeetingContent() {
             <div className="flex items-center space-x-4">
               <Badge variant="secondary" className="glass animate-scale-in">
                 <Users className="w-3 h-3 mr-1" />
-                {remoteStreams.length+1} participants
+                {remoteStreams.length + 1} participants
               </Badge>
               <Badge variant="outline" className="glass animate-scale-in">
                 <Clock className="w-3 h-3 mr-1" />
@@ -261,13 +270,15 @@ function MeetingContent() {
                       name="You"
                       isLocal
                       muted
-                      emotion="😃"
-                      emotionConfidence={0.95}
-                      showEmoji={isEmojiOverlayOn}
+                      emotion={getEmojiFromEmotion(localEmotion)}
+                      emotionConfidence={localEmotionConfidence}
+                      showEmoji={isEmojiOverlayOnRef.current}
                       showFaceSwap={isFaceSwapOn}
+                      onLocalEmotionDetected={handleLocalEmotionDetected}
+                      enableLocalEmotionDetection={isEmotionDetectionOn}
+                      landmarks={localLandmarks}
                     />
                   )}
-                  {isEmojiOverlayOn && <div className="absolute top-4 right-4 text-4xl animate-bounce">😊</div>}
                   {isFaceSwapOn && (
                     <div className="absolute inset-0 bg-gradient-to-br from-green-500/20 to-blue-500/20 rounded-lg flex items-center justify-center">
                       <div className="text-6xl animate-pulse">🦸‍♂️</div>
@@ -276,17 +287,18 @@ function MeetingContent() {
                 </div>
 
                 {/* Other participants */}
-                {remoteStreams.map((remote) => (
+                {remoteStreams.map((remote) =>   (
                   <VideoTile
                     key={remote.peerId}
                     stream={remote.stream}
                     name={remote.peerId}
                     isLocal={false}
                     muted={false}
-                    emotion="😃"
-                    emotionConfidence={0.9}
-                    showEmoji={isEmojiOverlayOn}
+                    emotion={getEmojiFromEmotion(userEmotions[remote.peerId]?.emotion)}
+                    emotionConfidence={userEmotions[remote.peerId]?.confidence}
+                    showEmoji={userEmotions[remote.peerId]?.isOverlayOn}
                     showFaceSwap={isFaceSwapOn}
+                    landmarks={userEmotions[remote.peerId]?.landmarks}
                   />
                 ))}
               </div>

@@ -19,8 +19,10 @@ export const useAuthStore = create((set, get) => ({
       const res = await API.checkAuth();
 
       set({ authUser : res.data });
-       console.log(get().authUser, ' from useAuthStore in checkauth');
+
+
       get().connectSocket();
+
     } catch (error) {
       console.log("Error in checkAuth:", error);
       set({ authUser: null });
@@ -35,7 +37,7 @@ export const useAuthStore = create((set, get) => ({
     try {
       
        set({ authUser: data }); // this saves the logged-in user
-    console.log(get().authUser, ' from useAuthStore after setting');
+    // console.log(get().authUser, ' from useAuthStore after setting');
 
     get().connectSocket(); // if you implement sockets later
     } catch (error) {
