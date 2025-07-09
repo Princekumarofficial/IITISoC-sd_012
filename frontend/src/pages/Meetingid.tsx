@@ -92,20 +92,20 @@ function MeetingContent() {
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [meetingDuration, setMeetingDuration] = useState(0)
   const [userEmotions, setUserEmotions] = useState<{
-    [userId: string]: { emotion: string; confidence: number , landmarks: FaceLandmarks68 , isOverlayOn : boolean};
+    [userId: string]: { emotion: string; confidence: number, landmarks: FaceLandmarks68, isOverlayOn: boolean };
   }>({});
   const navigate = useNavigate();
   const { addNotification } = useNotifications()
   const { localStream, remoteStreams, toggleMic, toggleCam, sendEmotionUpdate } = useSFUClient(id || "", (userId, emotion, confidence, landmarks, isOverlayOn) => {
     setUserEmotions((prev) => ({
       ...prev,
-      [userId]: { emotion, confidence, landmarks , isOverlayOn},
+      [userId]: { emotion, confidence, landmarks, isOverlayOn },
     }));
   });
   const [localEmotion, setLocalEmotion] = useState<string>("");
   const [localEmotionConfidence, setLocalEmotionConfidence] = useState<number>(0);
-  const [localLandmarks, setlocalLandmarks] = useState<FaceLandmarks68| null>(null);
-  
+  const [localLandmarks, setlocalLandmarks] = useState<FaceLandmarks68 | null>(null);
+
   // Meeting timer
   useEffect(() => {
     const timer = setInterval(() => {
@@ -120,22 +120,22 @@ function MeetingContent() {
   }, [isEmojiOverlayOn]);
 
 
-const handleLocalEmotionDetected = ({
-  emotion,
-  confidence,
-  landmarks
-}: {
-  emotion: string;
-  confidence: number;
-  landmarks: FaceLandmarks68;
-}) => {
-  console.log("Local emotion:", emotion, confidence.toFixed(2));
-  setLocalEmotion(emotion);
-  setLocalEmotionConfidence(confidence);
-  setlocalLandmarks(landmarks);
-  sendEmotionUpdate(id || null, emotion , confidence, landmarks , isEmojiOverlayOnRef.current);
- 
-};
+  const handleLocalEmotionDetected = ({
+    emotion,
+    confidence,
+    landmarks
+  }: {
+    emotion: string;
+    confidence: number;
+    landmarks: FaceLandmarks68;
+  }) => {
+    console.log("Local emotion:", emotion, confidence.toFixed(2));
+    setLocalEmotion(emotion);
+    setLocalEmotionConfidence(confidence);
+    setlocalLandmarks(landmarks);
+    sendEmotionUpdate(id || null, emotion, confidence, landmarks, isEmojiOverlayOnRef.current);
+
+  };
 
 
 
@@ -287,20 +287,26 @@ const handleLocalEmotionDetected = ({
                 </div>
 
                 {/* Other participants */}
-                {remoteStreams.map((remote) =>   (
-                  <VideoTile
-                    key={remote.peerId}
-                    stream={remote.stream}
-                    name={remote.peerId}
-                    isLocal={false}
-                    muted={false}
-                    emotion={getEmojiFromEmotion(userEmotions[remote.peerId]?.emotion)}
-                    emotionConfidence={userEmotions[remote.peerId]?.confidence}
-                    showEmoji={userEmotions[remote.peerId]?.isOverlayOn}
-                    showFaceSwap={isFaceSwapOn}
-                    landmarks={userEmotions[remote.peerId]?.landmarks}
-                  />
-                ))}
+                {remoteStreams.map((remote) => {
+                  console.log(`Rendering VideoTile for peer=${remote.peerId}`, {
+                    emotion: userEmotions[remote.peerId]?.emotion,
+                    landmarks: userEmotions[remote.peerId]?.landmarks
+                  });
+                  return (
+                    <VideoTile
+                      key={remote.peerId}
+                      stream={remote.stream}
+                      name={remote.peerId}
+                      isLocal={false}
+                      muted={false}
+                      emotion={getEmojiFromEmotion(userEmotions[remote.peerId]?.emotion)}
+                      emotionConfidence={userEmotions[remote.peerId]?.confidence}
+                      showEmoji={userEmotions[remote.peerId]?.isOverlayOn}
+                      showFaceSwap={isFaceSwapOn}
+                      landmarks={userEmotions[remote.peerId]?.landmarks}
+                    />
+                  )
+                })}
               </div>
             </div>
           </div>
