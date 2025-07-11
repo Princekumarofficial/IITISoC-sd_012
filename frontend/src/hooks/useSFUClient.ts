@@ -7,12 +7,17 @@ import type { FaceLandmarks68 } from "@vladmandic/face-api";
 
 export interface RemoteStream {
     peerId: string;
+    peerName: string;
     stream: MediaStream;
 }
 
+export type LandmarkSection = {
+  [key: string]: { x: number; y: number }[];
+};
+
 export function useSFUClient(
     roomId: string,
-    onEmotionUpdate: (userId: string, emotion: string, confidence: number , landmarks: FaceLandmarks68 , isOverlayOn : boolean) => void
+    onEmotionUpdate: (userId: string, emotion: string, confidence: number, landmarks: LandmarkSection, isOverlayOn: boolean) => void
 ) {
     const { authUser } = useAuthStore();
     const [localStream, setLocalStream] = useState<MediaStream | null>(null);
@@ -33,7 +38,7 @@ export function useSFUClient(
         wsRef.current = ws;
 
         ws.onopen = () => {
-            ws.send(JSON.stringify({ type: "joinRoom", data: { roomId, peerId: authUser._id } }));
+            ws.send(JSON.stringify({ type: "joinRoom", data: { roomId, peerId: authUser._id, peerName : authUser.username } }));
         };
 
         ws.onmessage = async (msg) => {
@@ -48,7 +53,7 @@ export function useSFUClient(
                 device.current = new mediasoupClient.Device();
                 await device.current.load({ routerRtpCapabilities: data.rtpCapabilities });
                 existingProducers.current = data.producers || [];
- 
+
                 for (const { producerId, peerId } of existingProducers.current) {
                     producerPeerMap.current.set(producerId, peerId);
                 }
@@ -101,8 +106,8 @@ export function useSFUClient(
             }
 
             if (type === "emotion_update") {
-                const { userId, emotion, confidence , landmarks, isOverlayOn } = data;
-                if (userId && emotion && typeof confidence === "number" && landmarks && isOverlayOn) {
+                const { userId, emotion, confidence, landmarks, isOverlayOn } = data;
+                if (userId && emotion && typeof confidence === "number" && landmarks) {
                     onEmotionUpdate(userId, emotion, confidence, landmarks, isOverlayOn);
                 }
             }
@@ -119,7 +124,8 @@ export function useSFUClient(
                     });
 
                     const peerId = consumerInfo.peerId;
-                    if (!newStreams[peerId]) newStreams[peerId] = { peerId, stream: new MediaStream() };
+                    const peerName = consumerInfo.peerName;
+                    if (!newStreams[peerId]) newStreams[peerId] = { peerId, peerName,stream: new MediaStream() };
                     newStreams[peerId].stream.addTrack(consumer.track);
                 }
 
@@ -176,14 +182,14 @@ export function useSFUClient(
     };
 
     const consume = async (producerId: string) => {
-        
+
         wsRef.current?.send(
             JSON.stringify({
                 type: "consume",
                 data: {
                     rtpCapabilities: device.current.rtpCapabilities,
                     producerId,
-                    peerId : authUser._id,
+                    peerId: authUser._id,
                 },
             })
         );
@@ -253,9 +259,15 @@ export function useSFUClient(
         }
     };
 
-    const sendEmotionUpdate = (roomId: string | null, emotion: string, confidence: number , landmarks : FaceLandmarks68, isOverlayOn:boolean) => {
+    const sendEmotionUpdate = (roomId: string | null, emotion: string, confidence: number, landmarks: FaceLandmarks68, isOverlayOn: boolean) => {
         // console.log("WebSocket readyState:", wsRef.current?.readyState);
         // console.log("roomId:", roomId, "userId:", authUser?._id);
+        const simplifyPoint = ({ x, y }: { x: number; y: number }) => ({ x, y });
+        const safeLandmarks = {
+            nose: simplifyPoint(landmarks.getNose()[3]),
+            leftEye: simplifyPoint(landmarks.getLeftEye()[0]),
+            rightEye: simplifyPoint(landmarks.getRightEye()[3]),
+        };
         wsRef.current?.send(
             JSON.stringify({
                 type: "emotion_update",
@@ -263,7 +275,7 @@ export function useSFUClient(
                     roomId,
                     emotion,
                     confidence,
-                    landmarks,
+                    landmarks:safeLandmarks,
                     isOverlayOn,
                     peerId: authUser._id,
                 },

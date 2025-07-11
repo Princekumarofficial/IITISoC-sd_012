@@ -34,6 +34,7 @@ import { NotificationProvider, useNotifications } from "../components/Notificati
 import { getEmojiFromEmotion } from "../utils/getEmoji";
 import { useParams } from "react-router-dom";
 import type { FaceLandmarks68 } from "@vladmandic/face-api";
+import type { LandmarkSection } from "../hooks/useSFUClient";
 // Mock participants data
 const participants = [
   {
@@ -92,7 +93,7 @@ function MeetingContent() {
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [meetingDuration, setMeetingDuration] = useState(0)
   const [userEmotions, setUserEmotions] = useState<{
-    [userId: string]: { emotion: string; confidence: number, landmarks: FaceLandmarks68, isOverlayOn: boolean };
+    [userId: string]: { emotion: string; confidence: number, landmarks: LandmarkSection, isOverlayOn: boolean };
   }>({});
   const navigate = useNavigate();
   const { addNotification } = useNotifications()
@@ -104,7 +105,7 @@ function MeetingContent() {
   });
   const [localEmotion, setLocalEmotion] = useState<string>("");
   const [localEmotionConfidence, setLocalEmotionConfidence] = useState<number>(0);
-  const [localLandmarks, setlocalLandmarks] = useState<FaceLandmarks68 | null>(null);
+  const [localLandmarks, setlocalLandmarks] = useState<FaceLandmarks68 | LandmarkSection | undefined>();
 
   // Meeting timer
   useEffect(() => {
@@ -288,15 +289,12 @@ function MeetingContent() {
 
                 {/* Other participants */}
                 {remoteStreams.map((remote) => {
-                  console.log(`Rendering VideoTile for peer=${remote.peerId}`, {
-                    emotion: userEmotions[remote.peerId]?.emotion,
-                    landmarks: userEmotions[remote.peerId]?.landmarks
-                  });
+                  // console.log(userEmotions[remote.peerId]?.isOverlayOn)
                   return (
                     <VideoTile
                       key={remote.peerId}
                       stream={remote.stream}
-                      name={remote.peerId}
+                      name={remote.peerName}
                       isLocal={false}
                       muted={false}
                       emotion={getEmojiFromEmotion(userEmotions[remote.peerId]?.emotion)}

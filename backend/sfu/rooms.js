@@ -1,10 +1,12 @@
 import { v4 as uuid } from "uuid";
 
 const rooms = new Map();
+const peers = new Map();
 
 export function createRoom(router) {
   const id = uuid();
   rooms.set(id, { router, peers: new Map() });
+  
   return id;
 }
 
@@ -12,13 +14,17 @@ export function getRoom(roomId) {
   return rooms.get(roomId);
 }
 
-export function addPeer(roomId, peerId, peerInfo) {
+export function addPeer(roomId, peerId, peerInfo, peerName) {
   const room = getRoom(roomId);
+  peers.set(peerId,peerName);
   room.peers.set(peerId, peerInfo);
 }
 
 export function getPeer(roomId, peerId) {
   return getRoom(roomId)?.peers.get(peerId);
+}
+export function getPeerName(peerId) {
+  return peers.get(peerId);
 }
 
 export function cleanupPeer(roomId, peerId) {

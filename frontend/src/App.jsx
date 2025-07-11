@@ -19,6 +19,7 @@ function App() {
   const { authUser, checkAuth, isCheckingAuth, onlineUsers } = useAuthStore();
  
   console.log({ onlineUsers  } , " online user from app.jsx");
+  console.log( authUser);
   
   useEffect(() => {
     checkAuth();

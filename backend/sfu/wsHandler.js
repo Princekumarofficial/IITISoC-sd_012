@@ -1,5 +1,5 @@
 import { mediaCodecs } from "./mediasoup-config.js";
-import { createRoom, getRoom, addPeer, getPeer, cleanupPeer } from "./rooms.js";
+import { createRoom, getRoom, addPeer, getPeer,getPeerName, cleanupPeer } from "./rooms.js";
 
 export default async function handleWebSocketConnection(ws, worker) {
   let currentPeerId = null;
@@ -46,11 +46,11 @@ export default async function handleWebSocketConnection(ws, worker) {
 
     if (type === "joinRoom") {
       roomId = data.roomId;
-      console.log(`👥 Peer ${peerId} joined room ${roomId}`);
+      console.log(`👥 Peer ${data.peerName} joined room ${roomId}`);
       const room = getRoom(roomId);
       if (!room) return ws.send(JSON.stringify({ type: "error", data: "Room not found" }));
 
-      addPeer(roomId, peerId, { ws });
+      addPeer(roomId, peerId, { ws } , data.peerName);
 
       const existingProducers = [];
       for (const [otherId, otherPeer] of room.peers) {
@@ -160,7 +160,7 @@ export default async function handleWebSocketConnection(ws, worker) {
       const allProducers = [];
       for (const [id, otherPeer] of room.peers) {
         if (id !== peerId && otherPeer.producers) {
-          allProducers.push(...otherPeer.producers.map((p) => ({ producer: p, peerId: id })));
+          allProducers.push(...otherPeer.producers.map((p) => ({ producer: p, peerId: id, producerPeerName: getPeerName(peerId) })));
         }
       }
 
@@ -168,7 +168,7 @@ export default async function handleWebSocketConnection(ws, worker) {
         ? allProducers.filter(({ producer }) => producer.id === producerId)
         : allProducers;
 
-      for (const { producer, peerId: producerPeerId } of targetProducers) {
+      for (const { producer, peerId: producerPeerId , producerPeerName } of targetProducers) {
         try {
           const consumer = await peer.recvTransport.consume({
             producerId: producer.id,
@@ -185,6 +185,7 @@ export default async function handleWebSocketConnection(ws, worker) {
             kind: consumer.kind,
             rtpParameters: consumer.rtpParameters,
             peerId: producerPeerId,
+            peerName : producerPeerName
           });
         } catch (err) {
           console.error("Failed to consume:", err);
