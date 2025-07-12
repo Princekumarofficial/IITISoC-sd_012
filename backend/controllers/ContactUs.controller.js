@@ -1,4 +1,4 @@
-import contactUs from "../models/contactUs.model.js"
+import contactUs from "../models/ContactUs.model.js"
 
 
 
