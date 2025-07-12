@@ -35,6 +35,8 @@ import { getEmojiFromEmotion } from "../utils/getEmoji";
 import { useParams } from "react-router-dom";
 import type { FaceLandmarks68 } from "@vladmandic/face-api";
 import type { LandmarkSection } from "../hooks/useSFUClient";
+import { useMediaStore } from "../store/useMediaStore";
+import { useAuthStore } from "../store/useAuthStore";
 // Mock participants data
 const participants = [
   {
@@ -81,8 +83,9 @@ const participants = [
 
 function MeetingContent() {
   const { id } = useParams();
-  const [isMuted, setIsMuted] = useState(false)
-  const [isVideoOn, setIsVideoOn] = useState(true)
+  const { isAudioEnabled, isVideoEnabled } = useMediaStore.getState()
+  const [isMuted, setIsMuted] = useState(!isAudioEnabled)
+  const [isVideoOn, setIsVideoOn] = useState(isVideoEnabled)
   const [isEmotionDetectionOn, setIsEmotionDetectionOn] = useState(true)
   const [isEmojiOverlayOn, setIsEmojiOverlayOn] = useState(true)
   const isEmojiOverlayOnRef = useRef(isEmojiOverlayOn);
@@ -106,6 +109,15 @@ function MeetingContent() {
   const [localEmotion, setLocalEmotion] = useState<string>("");
   const [localEmotionConfidence, setLocalEmotionConfidence] = useState<number>(0);
   const [localLandmarks, setlocalLandmarks] = useState<FaceLandmarks68 | LandmarkSection | undefined>();
+
+  useEffect(() => {
+  const { stream } = useMediaStore.getState();
+  if (!stream) {
+    console.warn("Stream is null, skipping join.");
+    stopMediaTracks(localStream);
+    navigate("/dashboard");
+}
+}, []);
 
   // Meeting timer
   useEffect(() => {
@@ -155,6 +167,11 @@ function MeetingContent() {
   };
 
   const handleLeaveMeeting = () => {
+     const stream = useMediaStore.getState().stream;
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+      useMediaStore.getState().setStream(null); // Clear from store
+    }
     addNotification({
       type: "info",
       title: "Leaving Meeting",
@@ -165,6 +182,22 @@ function MeetingContent() {
       navigate("/dashboard")
     }, 1000)
   }
+
+// Handling setting stream to null on reload
+useEffect(() => {
+  const handleBeforeUnload = () => {
+    const stream = useMediaStore.getState().stream;
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+      useMediaStore.getState().setStream(null); // Clear from store
+    }
+    stopMediaTracks(localStream);
+  };
+
+  window.addEventListener("beforeunload", handleBeforeUnload);
+  return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+}, []);
+
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -203,6 +236,7 @@ function MeetingContent() {
     document.addEventListener("fullscreenchange", handleFullscreenChange)
     return () => document.removeEventListener("fullscreenchange", handleFullscreenChange)
   }, [])
+
 
 
   return (
@@ -270,7 +304,7 @@ function MeetingContent() {
                       stream={localStream}
                       name="You"
                       isLocal
-                      muted
+                      muted={isMuted}
                       emotion={getEmojiFromEmotion(localEmotion)}
                       emotionConfidence={localEmotionConfidence}
                       showEmoji={isEmojiOverlayOnRef.current}
@@ -280,6 +314,23 @@ function MeetingContent() {
                       landmarks={localLandmarks}
                     />
                   )}
+                  {!localStream && (
+                    <VideoTile
+                      key="local"
+                      stream={localStream}
+                      name="You"
+                      isLocal
+                      muted={isMuted}
+                      emotion={getEmojiFromEmotion(localEmotion)}
+                      emotionConfidence={localEmotionConfidence}
+                      showEmoji={isEmojiOverlayOnRef.current}
+                      showFaceSwap={isFaceSwapOn}
+                      onLocalEmotionDetected={handleLocalEmotionDetected}
+                      enableLocalEmotionDetection={isEmotionDetectionOn}
+                      landmarks={localLandmarks}
+                    />
+                  )}
+
                   {isFaceSwapOn && (
                     <div className="absolute inset-0 bg-gradient-to-br from-green-500/20 to-blue-500/20 rounded-lg flex items-center justify-center">
                       <div className="text-6xl animate-pulse">🦸‍♂️</div>
@@ -289,7 +340,7 @@ function MeetingContent() {
 
                 {/* Other participants */}
                 {remoteStreams.map((remote) => {
-                  // console.log(userEmotions[remote.peerId]?.isOverlayOn)
+                  console.log(remote.stream);
                   return (
                     <VideoTile
                       key={remote.peerId}

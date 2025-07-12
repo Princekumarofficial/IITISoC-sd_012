@@ -9,29 +9,23 @@ import { TailCursor } from "../components/Tail-cursor"
 import { NotificationProvider, useNotifications } from "../components/Notification-system"
 import { CameraManager } from "../components/Camera-manager"
 import { Mic, MicOff, Video, VideoOff, Users } from "lucide-react"
-import { useSFUClient } from "../hooks/useSFUClient" 
+import { CopyableText } from "../components/ui/CopyableText"
+
 
 function PreJoinContent() {
-  const { id } = useParams()
-  const navigate = useNavigate()
-
-  const [roomId, setRoomId] = useState("")
-  const [userId, setUserId] = useState("user-" + Math.random().toString(36).substr(2, 8))
+  const { id } = useParams();
+  const navigate = useNavigate();
   const [meetingCodeInput, setMeetingCodeInput] = useState("")
-  const [isMuted, setIsMuted] = useState(false)
-  const [isVideoOn, setIsVideoOn] = useState(true)
-  const [localStream, setLocalStream] = useState<MediaStream | null>(null)
+  
 
   const localStreamRef = useRef<MediaStream | null>(null)
-  const localVideoRef = useRef<HTMLVideoElement | null>(null)
-
-
-
   const { addNotification } = useNotifications()
 
   const handleStreamReady = (stream: MediaStream) => {
-    setLocalStream(stream)
+    // setLocalStream(stream)
     localStreamRef.current = stream
+
+    
     addNotification({
       type: "success",
       title: "Camera Connected",
@@ -41,6 +35,14 @@ function PreJoinContent() {
 
 const handleJoinMeeting = async () => {
   const finalRoomId = id && id !== "null" ? id : meetingCodeInput.trim();
+  if (!localStreamRef.current) {
+    addNotification({
+      type: "error",
+      title: "Camera and Mic Not Active",
+      message: "Please start your camera and microphone before joining the meeting.",
+    });
+    return;
+  }
 
   if (!finalRoomId) {
     addNotification({
@@ -80,10 +82,12 @@ const handleJoinMeeting = async () => {
                     variant="outline"
                     size="sm"
                     className="w-full glass glow ripple"
+                 
                   >
                     <Users className="w-4 h-4 mr-2" />
                     Join Meeting
                   </Button>
+                  {id && <CopyableText value={id} />}
                 </div>
               </div>
             </div>

@@ -7,6 +7,7 @@ import { Badge } from "../components/ui/Badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/Select"
 import { Camera, CameraOff, Mic, MicOff, RefreshCw } from "lucide-react"
 import { useNotifications } from "./Notification-system"
+import { useMediaStore } from "../store/useMediaStore"
 
 interface CameraManagerProps {
   onStreamReady?: (stream: MediaStream) => void
@@ -14,6 +15,7 @@ interface CameraManagerProps {
 }
 
 export function CameraManager({ onStreamReady, className }: CameraManagerProps) {
+  // const { setVideoEnabled, setAudioEnabled } = useMediaStore();
   const [stream, setStream] = useState<MediaStream | null>(null)
   const [isVideoEnabled, setIsVideoEnabled] = useState(true)
   const [isAudioEnabled, setIsAudioEnabled] = useState(true)
@@ -32,10 +34,10 @@ export function CameraManager({ onStreamReady, className }: CameraManagerProps) 
 
 
   useEffect(() => {
-  if (videoRef.current && stream) {
-    videoRef.current.srcObject = stream;
-  }
-}, [stream]);
+    if (videoRef.current && stream) {
+      videoRef.current.srcObject = stream;
+    }
+  }, [stream]);
 
   // Check permissions
   const checkPermissions = async () => {
@@ -48,7 +50,7 @@ export function CameraManager({ onStreamReady, className }: CameraManagerProps) 
       } else if (cameraPermission.state === "denied" || micPermission.state === "denied") {
         setPermissionState("denied")
       }
-       // If granted, auto start
+      // If granted, auto start
       // if (cameraPermission.state === "granted") {
       //   await startCamera();
       // }
@@ -87,19 +89,20 @@ export function CameraManager({ onStreamReady, className }: CameraManagerProps) 
 
   // Initialize camera with better error handling
   const startCamera = async () => {
+
     setIsLoading(true)
     setError(null)
 
-      // if (!selectedCamera || !selectedMicrophone) {
-      // setError("Please select both a camera and a microphone first.")
-      
-      //  addNotification({
-      //   type: "error",
-      //   title: "Camera Error",
-      //   message: "Please select both a camera and a microphone first.",
-      // })
-      // return
-      // }
+    // if (!selectedCamera || !selectedMicrophone) {
+    // setError("Please select both a camera and a microphone first.")
+
+    //  addNotification({
+    //   type: "error",
+    //   title: "Camera Error",
+    //   message: "Please select both a camera and a microphone first.",
+    // })
+    // return
+    // }
 
     try {
       // Stop existing stream first
@@ -110,24 +113,25 @@ export function CameraManager({ onStreamReady, className }: CameraManagerProps) 
       const constraints: MediaStreamConstraints = {
         video: isVideoEnabled
           ? {
-              deviceId: selectedCamera ? { exact: selectedCamera } : undefined,
-              width: { ideal: 1280 },
-              height: { ideal: 720 },
-              frameRate: { ideal: 30 },
-              facingMode: "user",
-            }
+            deviceId: selectedCamera ? { exact: selectedCamera } : undefined,
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+            frameRate: { ideal: 30 },
+            facingMode: "user",
+          }
           : false,
         audio: isAudioEnabled
           ? {
-              deviceId: selectedMicrophone ? { exact: selectedMicrophone } : undefined,
-              echoCancellation: true,
-              noiseSuppression: true,
-              autoGainControl: true,
-              sampleRate: 44100,
-            }
+            deviceId: selectedMicrophone ? { exact: selectedMicrophone } : undefined,
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true,
+            sampleRate: 44100,
+          }
           : false,
       }
-
+      useMediaStore.getState().setSelectedCamera(selectedCamera);
+      useMediaStore.getState().setSelectedMicrophone(selectedMicrophone);
       console.log("Requesting media with constraints:", constraints)
 
       const mediaStream = await navigator.mediaDevices.getUserMedia(constraints)
@@ -137,16 +141,17 @@ export function CameraManager({ onStreamReady, className }: CameraManagerProps) 
       console.log("Audio tracks:", mediaStream.getAudioTracks())
 
       setStream(mediaStream)
+      useMediaStore.getState().setStream(mediaStream);
       setPermissionState("granted")
       setHasCameraControls(true);
-      setTimeout( ()=> {
-      if (videoRef.current) {
-        videoRef.current.srcObject = mediaStream
-        videoRef.current.onloadedmetadata = () => {
-          videoRef.current?.play().catch(console.error)
+      setTimeout(() => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = mediaStream
+          videoRef.current.onloadedmetadata = () => {
+            videoRef.current?.play().catch(console.error)
+          }
         }
-      }
-    },100);
+      }, 100);
       onStreamReady?.(mediaStream)
 
       addNotification({
@@ -201,87 +206,105 @@ export function CameraManager({ onStreamReady, className }: CameraManagerProps) 
   const stopCamera = () => {
     if (stream) {
       stream.getTracks().forEach((track) => {
-        track.stop()
-        console.log(`Stopped ${track.kind} track`)
-      })
-      setStream(null)
+        track.stop();
+        console.log(`Stopped ${track.kind} track`);
+      });
+
+      setStream(null);
+      useMediaStore.getState().setStream(null);
+      useMediaStore.getState().setAudioEnabled(true);
+      useMediaStore.getState().setVideoEnabled(true);
+      setIsAudioEnabled(true);
+      setIsVideoEnabled(true);
+
       if (videoRef.current) {
-        videoRef.current.srcObject = null
+        videoRef.current.srcObject = null;
       }
+
       setHasCameraControls(false);
+
       addNotification({
         type: "info",
         title: "Camera Stopped",
         message: "Camera and microphone have been turned off",
-      })
+      });
     }
-  }
+  };
 
-const toggleVideo = async () => {
-  if (isVideoEnabled) {
-    // 🔴 Turn OFF: Stop camera track
-    if (stream) {
-      stream.getVideoTracks().forEach((track) => track.stop());
-      const audioTracks = stream.getAudioTracks();
-      const newStream = new MediaStream(audioTracks);
-      setStream(newStream); // Update with only audio
-      if (videoRef.current) videoRef.current.srcObject = newStream;
-    }
-    setIsVideoEnabled(false);
+  const toggleVideo = () => {
+    const mediaStore = useMediaStore.getState();
+    const currentStream = mediaStore.stream;
+    if (!currentStream) return;
+
+    const videoTrack = currentStream.getVideoTracks()[0];
+    if (!videoTrack) return;
+
+    const isEnabled = videoTrack.enabled;
+    videoTrack.enabled = !isEnabled;
+
+    mediaStore.setVideoEnabled(!isEnabled);
+    setIsVideoEnabled(!isEnabled);
+
     addNotification({
       type: "info",
-      title: "Video Off",
-      message: "Camera has been turned off",
+      title: !isEnabled ? "Video On" : "Video Off",
+      message: `Camera has been turned ${!isEnabled ? "on" : "off"}`,
     });
-  } else {
-    // 🟢 Turn ON: Reacquire video
-    try {
-      const newStream = await navigator.mediaDevices.getUserMedia({
-        video: { deviceId: selectedCamera ? { exact: selectedCamera } : undefined },
-        audio: false,
-      });
-      const combined = new MediaStream([
-        ...stream?.getAudioTracks() ?? [],
-        ...newStream.getVideoTracks(),
-      ]);
-      setStream(combined);
-      setTimeout( ()=>{ 
-      if (videoRef.current) videoRef.current.srcObject = combined;
-      },100);
-      setIsVideoEnabled(true);
-      addNotification({
-        type: "info",
-        title: "Video On",
-        message: "Camera has been turned on",
-      });
-    } catch (err) {
-      console.error("Failed to turn on camera:", err);
-      addNotification({
-        type: "error",
-        title: "Camera Error",
-        message: "Could not access the camera again.",
-      });
-    }
-  }
-};
+  };
 
-const toggleAudio = () => {
-  if (stream) {
-    const audioTrack = stream.getAudioTracks()[0];
+  const toggleAudio = async () => {
+    const mediaStore = useMediaStore.getState();
+    const currentStream = mediaStore.stream;
+    if (!currentStream) return;
+
+    const audioTrack = currentStream.getAudioTracks()[0];
+
     if (audioTrack) {
-      audioTrack.enabled = !audioTrack.enabled;
-      setIsAudioEnabled(audioTrack.enabled);
+      // 🔴 Turn OFF mic
+      audioTrack.stop();
+      const newStream = new MediaStream(currentStream.getVideoTracks());
+      mediaStore.setStream(newStream);
+      mediaStore.setAudioEnabled(false);
+      setIsAudioEnabled(false);
       addNotification({
         type: "info",
-        title: audioTrack.enabled ? "Mic On" : "Mic Off",
-        message: audioTrack.enabled ? "Microphone is now on" : "Microphone is now off",
-        duration: 2000,
+        title: "Mic Off",
+        message: "Microphone has been turned off",
       });
+    } else {
+      // 🟢 Turn ON mic
+      try {
+        const { selectedMicrophone } = mediaStore;
+
+        const newAudioStream = await navigator.mediaDevices.getUserMedia({
+          audio: selectedMicrophone ? { deviceId: { exact: selectedMicrophone } } : true,
+          video: false,
+        });
+
+        const newAudioTrack = newAudioStream.getAudioTracks()[0];
+        const newStream = new MediaStream([
+          ...currentStream.getVideoTracks(),
+          newAudioTrack,
+        ]);
+
+        mediaStore.setStream(newStream);
+        mediaStore.setAudioEnabled(true);
+        setIsAudioEnabled(true);
+        addNotification({
+          type: "info",
+          title: "Mic On",
+          message: "Microphone has been turned on",
+        });
+      } catch (err) {
+        console.error("Failed to turn on microphone:", err);
+        addNotification({
+          type: "error",
+          title: "Microphone Error",
+          message: "Could not access the microphone again.",
+        });
+      }
     }
-  } else {
-    setIsAudioEnabled((prev) => !prev);
-  }
-};
+  };
 
 
 
@@ -297,20 +320,20 @@ const toggleAudio = () => {
     })
   }
 
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (stream) {
-        stream.getTracks().forEach((track) => track.stop())
-      }
-    }
-  }, [stream])
+  // // Cleanup on unmount
+  // useEffect(() => {
+  //   return () => {
+  //     if (stream) {
+  //       stream.getTracks().forEach((track) => track.stop())
+  //     }
+  //   }
+  // }, [stream])
 
   return (
-    <Card className={`video-container ${className}`}>
-      <div className="relative">
+    <Card className={`video-container overflow-hidden ${className}`}>
+      <div className="overflow-hidden relative">
         {stream && isVideoEnabled ? (
-          <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover rounded-lg" />
+          <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover rounded-lg overflow-hidden" />
         ) : (
           <div className="aspect-video bg-gradient-to-br from-primary/20 to-blue-600/20 flex items-center justify-center rounded-lg">
             {isLoading ? (
@@ -336,15 +359,15 @@ const toggleAudio = () => {
                   )}
                 </div>
               </div>
-            ) : !stream && devices.cameras.length > 0 &&(
+            ) : !stream && devices.cameras.length > 0 && (
               <div className="text-center space-y-4">
-                <Camera className="w-12 h-12 text-muted-foreground" />
+                {/* <Camera className="w-12 h-12 text-muted-foreground" /> */}
                 <div>
                   <p className="text-sm font-medium">Camera Ready</p>
-                  <p className="text-xs text-muted-foreground">Click to start your camera</p>
+                  <p className="text-xs text-muted-foreground">Click start after choosing the desired camera and microphone.</p>
                 </div>
                 <Button onClick={startCamera} className="glow">
-                  Start Camera
+                  Start Camera and Mic
                 </Button>
               </div>
             )}
@@ -356,7 +379,7 @@ const toggleAudio = () => {
 
         {/* Controls overlay */}
         {hasCameraControls && (
-          <div className="absolute bottom-4 left-4 right-4">
+          <div className="absolute bottom-4 left-4 right-4" style={{ zIndex: 1000 }}>
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <Badge variant={isVideoEnabled ? "default" : "destructive"} className="glass">

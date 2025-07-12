@@ -5,7 +5,7 @@ import { getEmojiFromEmotion, getEmotionFromEmoji } from "../utils/getEmoji";
 import { LandmarkSection } from "../hooks/useSFUClient";
 
 export interface VideoTileProps {
-  stream: MediaStream;
+  stream: MediaStream|null;
   name: string;
   isLocal?: boolean;
   muted?: boolean;
