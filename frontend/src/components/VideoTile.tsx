@@ -1,10 +1,11 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useEmotionDetection } from "../hooks/useEmotionDetection";
-import type { FaceLandmarks68 } from "@vladmandic/face-api";
-import { getEmojiFromEmotion } from "../utils/getEmoji";
+import { FaceLandmarks68 } from "@vladmandic/face-api";
+import { getEmojiFromEmotion, getEmotionFromEmoji } from "../utils/getEmoji";
+import { LandmarkSection } from "../hooks/useSFUClient";
 
 export interface VideoTileProps {
-  stream: MediaStream;
+  stream: MediaStream | null;
   name: string;
   isLocal?: boolean;
   muted?: boolean;
@@ -17,7 +18,7 @@ export interface VideoTileProps {
   // onLocalEmotionDetected?: (data: { emotion: string; confidence: number }) => void;
   onLocalEmotionDetected?: (data: { emotion: string; confidence: number, landmarks: FaceLandmarks68 }) => void;
   enableLocalEmotionDetection?: boolean;
-  landmarks?: FaceLandmarks68 | null;
+  landmarks?: FaceLandmarks68 | LandmarkSection;
 }
 
 export const VideoTile: React.FC<VideoTileProps> = ({
@@ -31,6 +32,7 @@ export const VideoTile: React.FC<VideoTileProps> = ({
   showFaceSwap = false,
   className = "",
   style = {},
+ 
   onLocalEmotionDetected,
   enableLocalEmotionDetection = false,
   landmarks,
@@ -38,13 +40,16 @@ export const VideoTile: React.FC<VideoTileProps> = ({
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null); // ✅ Canvas ref
   const emojiRef = useRef<string>("😐");
-  const landmarksRef = useRef<FaceLandmarks68 | null>(null);
+  const landmarksRef = useRef<FaceLandmarks68 | LandmarkSection | null>(null);
+
 
   // Attach stream
   useEffect(() => {
     if (videoRef.current && stream) {
       videoRef.current.srcObject = stream;
     }
+
+
   }, [stream]);
 
   // Hook: Only for local video
@@ -58,30 +63,54 @@ export const VideoTile: React.FC<VideoTileProps> = ({
     }
   );
 
-  useEffect( ()=>{
+  useEffect(() => {
+    if (!isLocal) {
+      if (showEmoji) {
+        if (emotion) {
+          emojiRef.current = getEmotionFromEmoji(emotion);
+        }
 
-    if(!isLocal)
-    {
-      if(emotion)
-      emojiRef.current = emotion;
-      if(landmarks)
-      landmarksRef.current = landmarks;
+        if (landmarks) {
+          landmarksRef.current = landmarks;
+        }
+      } else {
+        // ✅ When overlay is off, clear everything
+        landmarksRef.current = null;
+        emojiRef.current = "";
+      }
     }
+  }, [emotion, landmarks, showEmoji]);
 
-  },[emotion,landmarks])
+
+
+
 
   useEffect(() => {
-  const video = videoRef.current;
-  const canvas = canvasRef.current;
-  if (video && canvas) {
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-  }
-}, [stream]);
+    const canvas = canvasRef.current;
+    const video = videoRef.current;
+
+    if (!canvas || !video) return;
+
+    const handleLoadedMetadata = () => {
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+    };
+
+    // If video is already loaded, set immediately
+    if (video.readyState >= 1) {
+      handleLoadedMetadata();
+    } else {
+      video.addEventListener('loadedmetadata', handleLoadedMetadata);
+    }
+
+    return () => {
+      video.removeEventListener('loadedmetadata', handleLoadedMetadata);
+    };
+  }, []);
 
   // ✅ Draw emoji overlay
   useEffect(() => {
-    if ((isLocal && (!enableLocalEmotionDetection || !showEmoji))||(!isLocal && !showEmoji)) return;
+    if ((isLocal && (!enableLocalEmotionDetection || !showEmoji)) || (!isLocal && !showEmoji)) return;
 
 
     const canvas = canvasRef.current;
@@ -91,33 +120,92 @@ export const VideoTile: React.FC<VideoTileProps> = ({
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
+
+
     const render = () => {
+
+      // if(!isLocal)
+      // console.log(showEmoji);
+      if (
+        canvas.width !== video.videoWidth ||
+        canvas.height !== video.videoHeight
+      ) {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+      }
+
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       const landmarks = landmarksRef.current;
       const emoji = getEmojiFromEmotion(emojiRef.current);
 
-      if (landmarks && video.videoWidth && video.videoHeight) {
-        const nose = landmarks.getNose()[3];
-        const leftEye = landmarks.getLeftEye()[0];
-        const rightEye = landmarks.getRightEye()[3];
 
-        const dx = rightEye.x - leftEye.x;
-        const dy = rightEye.y - leftEye.y;
-        const angle = Math.atan2(dy, dx);
-        const eyeDist = Math.hypot(dx, dy);
+      if (landmarks) {
+        let nose, leftEye, rightEye;
 
-        const scaleX = canvas.width / video.videoWidth;
-        const scaleY = canvas.height / video.videoHeight;
-        const fontSize = eyeDist * scaleX * 2.5;
+        if (
+          typeof (landmarks as FaceLandmarks68).getNose === "function" &&
+          typeof (landmarks as FaceLandmarks68).getLeftEye === "function" &&
+          typeof (landmarks as FaceLandmarks68).getRightEye === "function"
+        ) {
+          // ✅ Local - FaceLandmarks68
+          const nosePoints = (landmarks as FaceLandmarks68).getNose();
+          const leftEyePoints = (landmarks as FaceLandmarks68).getLeftEye();
+          const rightEyePoints = (landmarks as FaceLandmarks68).getRightEye();
 
-        ctx.save();
-        ctx.translate(nose.x * scaleX, nose.y * scaleY);
-        ctx.rotate(angle);
-        ctx.font = `${fontSize}px sans-serif`;
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText(emoji, 0, 0);
-        ctx.restore();
+          if (
+            nosePoints.length > 3 &&
+            leftEyePoints.length > 0 &&
+            rightEyePoints.length > 3
+          ) {
+            nose = nosePoints[3];
+            leftEye = leftEyePoints[0];
+            rightEye = rightEyePoints[3];
+          }
+        } else if (
+          "nose" in landmarks &&
+          "leftEye" in landmarks &&
+          "rightEye" in landmarks
+        ) {
+          // ✅ Remote - LandmarkSection
+          const remote = landmarks as LandmarkSection;
+          nose = remote.nose;
+          leftEye = remote.leftEye;
+          rightEye = remote.rightEye;
+
+        }
+
+        // ✅ If all key points are valid
+        if (
+          nose && leftEye && rightEye &&
+          typeof nose.x === "number" && typeof nose.y === "number" &&
+          typeof leftEye.x === "number" && typeof leftEye.y === "number" &&
+          typeof rightEye.x === "number" && typeof rightEye.y === "number"
+        ) {
+          const dx = rightEye.x - leftEye.x;
+          const dy = rightEye.y - leftEye.y;
+          const angle = Math.atan2(dy, dx);
+          const eyeDist = Math.hypot(dx, dy);
+
+          const scaleX = canvas.width / video.videoWidth;
+          const scaleY = canvas.height / video.videoHeight;
+          const fontSize = eyeDist * scaleX * 2.5;
+
+          ctx.save();
+          ctx.translate(nose.x * scaleX, nose.y * scaleY);
+          ctx.rotate(angle);
+          ctx.font = `${fontSize}px sans-serif`;
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText(emoji, 0, 0);
+          ctx.restore();
+        } else {
+          console.warn("🚨 Invalid landmark points — one or more values are NaN or undefined", {
+            nose,
+            leftEye,
+            rightEye
+          });
+        }
+
       }
 
       requestAnimationFrame(render);
@@ -132,15 +220,18 @@ export const VideoTile: React.FC<VideoTileProps> = ({
       className={`relative rounded-lg overflow-hidden bg-black w-full aspect-video ${className}`}
       style={style}
     >
-      <video
-        ref={videoRef}
-        autoPlay
-        playsInline
-        muted={isLocal || muted}
-        className="w-full h-full object-cover"
-      />
+       
+        <video
+          ref={videoRef}
+          autoPlay
+          playsInline
+          muted={isLocal || muted}
+          className="w-full h-full object-cover"
+        />
+       
+ 
 
-      {((isLocal && enableLocalEmotionDetection && showEmoji )||(!isLocal && showEmoji)) && (
+      {((isLocal && enableLocalEmotionDetection && showEmoji) || (!isLocal && showEmoji)) && (!!(videoRef.current?.srcObject as MediaStream)?.getVideoTracks()[0]?.enabled) && (
         <canvas
           ref={canvasRef}
           className="absolute top-0 left-0 w-full h-full pointer-events-none"
@@ -153,12 +244,13 @@ export const VideoTile: React.FC<VideoTileProps> = ({
         </div>
       )}
 
-      {emotion && (!isLocal || enableLocalEmotionDetection) && (
+      {emotion && (!isLocal || enableLocalEmotionDetection) && (!!(videoRef.current?.srcObject as MediaStream)?.getVideoTracks()[0]?.enabled) && (
         <div className="absolute top-2 right-2 text-3xl animate-bounce">{emotion}</div>
       )}
+
       <div className="absolute bottom-2 left-2 text-white bg-black/60 px-2 py-1 text-xs rounded">
         {name} {emotionConfidence ? `(${(emotionConfidence * 100).toFixed(0)}%)` : ""}
       </div>
     </div>
-  );
+  )
 };

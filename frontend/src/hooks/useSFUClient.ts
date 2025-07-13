@@ -4,17 +4,24 @@ import { useNotifications } from "../components/Notification-system";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../store/useAuthStore";
 import type { FaceLandmarks68 } from "@vladmandic/face-api";
+import { useMediaStore } from "../store/useMediaStore";
 
 export interface RemoteStream {
     peerId: string;
+    peerName: string;
     stream: MediaStream;
 }
 
+export type LandmarkSection = {
+    [key: string]: { x: number; y: number }[];
+};
+
 export function useSFUClient(
     roomId: string,
-    onEmotionUpdate: (userId: string, emotion: string, confidence: number , landmarks: FaceLandmarks68 , isOverlayOn : boolean) => void
+    onEmotionUpdate: (userId: string, emotion: string, confidence: number, landmarks: LandmarkSection, isOverlayOn: boolean) => void
 ) {
     const { authUser } = useAuthStore();
+    const { isVideoEnabled, isAudioEnabled } = useMediaStore.getState();
     const [localStream, setLocalStream] = useState<MediaStream | null>(null);
     const [remoteStreams, setRemoteStreams] = useState<RemoteStream[]>([]);
     const { addNotification } = useNotifications();
@@ -33,7 +40,7 @@ export function useSFUClient(
         wsRef.current = ws;
 
         ws.onopen = () => {
-            ws.send(JSON.stringify({ type: "joinRoom", data: { roomId, peerId: authUser._id } }));
+            ws.send(JSON.stringify({ type: "joinRoom", data: { roomId, peerId: authUser._id, peerName: authUser.username } }));
         };
 
         ws.onmessage = async (msg) => {
@@ -48,7 +55,7 @@ export function useSFUClient(
                 device.current = new mediasoupClient.Device();
                 await device.current.load({ routerRtpCapabilities: data.rtpCapabilities });
                 existingProducers.current = data.producers || [];
- 
+
                 for (const { producerId, peerId } of existingProducers.current) {
                     producerPeerMap.current.set(producerId, peerId);
                 }
@@ -101,8 +108,8 @@ export function useSFUClient(
             }
 
             if (type === "emotion_update") {
-                const { userId, emotion, confidence , landmarks, isOverlayOn } = data;
-                if (userId && emotion && typeof confidence === "number" && landmarks && isOverlayOn) {
+                const { userId, emotion, confidence, landmarks, isOverlayOn } = data;
+                if (userId && emotion && typeof confidence === "number" && landmarks) {
                     onEmotionUpdate(userId, emotion, confidence, landmarks, isOverlayOn);
                 }
             }
@@ -119,7 +126,8 @@ export function useSFUClient(
                     });
 
                     const peerId = consumerInfo.peerId;
-                    if (!newStreams[peerId]) newStreams[peerId] = { peerId, stream: new MediaStream() };
+                    const peerName = consumerInfo.peerName;
+                    if (!newStreams[peerId]) newStreams[peerId] = { peerId, peerName, stream: new MediaStream() };
                     newStreams[peerId].stream.addTrack(consumer.track);
                 }
 
@@ -165,25 +173,50 @@ export function useSFUClient(
     };
 
     const startWebcam = async () => {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-        setLocalStream(stream);
+        const {
+            stream,
+            isVideoEnabled,
+            isAudioEnabled,
+        } = useMediaStore.getState();
 
-        for (const track of stream.getTracks()) {
-            const producer = await sendTransport.current.produce({ track });
-            if (track.kind === "audio") audioProducer.current = producer;
-            if (track.kind === "video") videoProducer.current = producer;
+        if (!stream) {
+            console.warn("No media stream available in store.");
+            return;
         }
-    };
 
+        const tracks = stream.getTracks();
+
+        for (const track of tracks) {
+            const producer = await sendTransport.current.produce({ track });
+
+            if (track.kind === "video") {
+                videoProducer.current = producer;
+                if (!isVideoEnabled) {
+                    producer.pause();
+                    track.stop(); // ✅ turns off camera light
+                }
+            }
+
+            if (track.kind === "audio") {
+                audioProducer.current = producer;
+                if (!isAudioEnabled) {
+                    producer.pause();
+                    track.stop(); // ✅ turns off mic use (optional)
+                }
+            }
+        }
+
+        setLocalStream(stream); // ✅ Still hold the combined stream in state
+    };
     const consume = async (producerId: string) => {
-        
+
         wsRef.current?.send(
             JSON.stringify({
                 type: "consume",
                 data: {
                     rtpCapabilities: device.current.rtpCapabilities,
                     producerId,
-                    peerId : authUser._id,
+                    peerId: authUser._id,
                 },
             })
         );
@@ -191,6 +224,12 @@ export function useSFUClient(
 
     const toggleMic = async () => {
         if (!audioProducer.current) return;
+
+        const {
+            selectedMicrophone,
+            setAudioEnabled,
+            setStream,
+        } = useMediaStore.getState();
 
         const isTrackEnded = localStream?.getAudioTracks().every((t) => t.readyState === "ended");
         const isPaused = audioProducer.current.paused;
@@ -203,26 +242,41 @@ export function useSFUClient(
         });
 
         if (isPaused || isTrackEnded) {
-            const newStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            const newStream = await navigator.mediaDevices.getUserMedia({
+                audio: {
+                    deviceId: selectedMicrophone ? { exact: selectedMicrophone } : undefined,
+                },
+            });
             const newAudioTrack = newStream.getAudioTracks()[0];
 
             await audioProducer.current.replaceTrack({ track: newAudioTrack });
 
-            const newCombinedStream = new MediaStream([
+            const combinedStream = new MediaStream([
                 newAudioTrack,
-                ...localStream!.getVideoTracks().filter((t) => t.readyState !== "ended"),
+                ...localStream?.getVideoTracks().filter((t) => t.readyState !== "ended") || [],
             ]);
-            setLocalStream(newCombinedStream);
 
+            setLocalStream(combinedStream);
+            setStream(combinedStream);
             audioProducer.current.resume();
+            setAudioEnabled(true);
         } else {
             audioProducer.current.pause();
-            localStream?.getAudioTracks().forEach((track) => track.stop());
+            localStream?.getAudioTracks().forEach((t) => t.stop());
+
+            const remainingTracks = localStream?.getVideoTracks() || [];
+            const newStream = new MediaStream(remainingTracks);
+
+            setLocalStream(newStream);
+            setStream(newStream);
+            setAudioEnabled(false);
         }
     };
 
     const toggleCam = async () => {
         if (!videoProducer.current) return;
+
+        const { selectedCamera, setVideoEnabled , setStream } = useMediaStore.getState();
 
         const isTrackEnded = localStream?.getVideoTracks().every((t) => t.readyState === "ended");
         const isPaused = videoProducer.current.paused;
@@ -235,7 +289,11 @@ export function useSFUClient(
         });
 
         if (isPaused || isTrackEnded) {
-            const newStream = await navigator.mediaDevices.getUserMedia({ video: true });
+            const newStream = await navigator.mediaDevices.getUserMedia({
+                video: {
+                    deviceId: selectedCamera ? { exact: selectedCamera } : undefined,
+                },
+            });
             const newVideoTrack = newStream.getVideoTracks()[0];
 
             await videoProducer.current.replaceTrack({ track: newVideoTrack });
@@ -245,17 +303,27 @@ export function useSFUClient(
                 ...localStream!.getAudioTracks(),
             ]);
             setLocalStream(newCombinedStream);
+            setStream(newCombinedStream)
+            setVideoEnabled(true);
 
             videoProducer.current.resume();
         } else {
             videoProducer.current.pause();
             localStream?.getVideoTracks().forEach((track) => track.stop());
+            setVideoEnabled(false);
+            
         }
     };
 
-    const sendEmotionUpdate = (roomId: string | null, emotion: string, confidence: number , landmarks : FaceLandmarks68, isOverlayOn:boolean) => {
+    const sendEmotionUpdate = (roomId: string | null, emotion: string, confidence: number, landmarks: FaceLandmarks68, isOverlayOn: boolean) => {
         // console.log("WebSocket readyState:", wsRef.current?.readyState);
         // console.log("roomId:", roomId, "userId:", authUser?._id);
+        const simplifyPoint = ({ x, y }: { x: number; y: number }) => ({ x, y });
+        const safeLandmarks = {
+            nose: simplifyPoint(landmarks.getNose()[3]),
+            leftEye: simplifyPoint(landmarks.getLeftEye()[0]),
+            rightEye: simplifyPoint(landmarks.getRightEye()[3]),
+        };
         wsRef.current?.send(
             JSON.stringify({
                 type: "emotion_update",
@@ -263,7 +331,7 @@ export function useSFUClient(
                     roomId,
                     emotion,
                     confidence,
-                    landmarks,
+                    landmarks: safeLandmarks,
                     isOverlayOn,
                     peerId: authUser._id,
                 },

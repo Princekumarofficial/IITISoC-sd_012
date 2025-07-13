@@ -10,30 +10,27 @@ import { NotificationProvider, useNotifications } from "../components/Notificati
 import { CameraManager } from "../components/Camera-manager";
 import { Users } from "lucide-react";
 import { useMeetingChatStore } from "../store/useMeetingStore";
+import { CopyableText } from "../components/ui/CopyableText";
 
 function PreJoinContent() {
-  const { id } = useParams();              // if new meeting created, id param will be there
+  const { id } = useParams(); // if new meeting created, id param will be there
   const navigate = useNavigate();
-   const [roomId, setRoomId] = useState("")
-   const [userId, setUserId] = useState("user-" + Math.random().toString(36).substr(2, 8))
+  const [userId, setUserId] = useState("user-" + Math.random().toString(36).substr(2, 8));
 
   const { addNotification } = useNotifications();
-
   const { createMeeting, addParticipant } = useMeetingChatStore();
 
-  const [meetingTitle, setMeetingTitle] = useState("");      // for new meeting
-  const [meetingType, setMeetingType] = useState("group");   // default type
+  const [meetingTitle, setMeetingTitle] = useState(""); // for new meeting
+  const [meetingType, setMeetingType] = useState("group"); // default type
   const [meetingCodeInput, setMeetingCodeInput] = useState(""); // for joining meeting
-  
-  const [isMuted, setIsMuted] = useState(false)
-  const [isVideoOn, setIsVideoOn] = useState(true)
+
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
-   const localVideoRef = useRef<HTMLVideoElement | null>(null)
 
   const handleStreamReady = (stream: MediaStream) => {
     setLocalStream(stream);
     localStreamRef.current = stream;
+
     addNotification({
       type: "success",
       title: "Camera Connected",
@@ -43,7 +40,7 @@ function PreJoinContent() {
 
   const handleJoinMeeting = async () => {
     if (id && id !== "null") {
-      // ✅ We have id → it's a new meeting we just created → ask title & type, call createMeeting
+      // ✅ New meeting
       if (!meetingTitle.trim()) {
         addNotification({
           type: "error",
@@ -54,7 +51,7 @@ function PreJoinContent() {
       }
 
       try {
-        await createMeeting({ title: meetingTitle, type: meetingType  , meetingId : id}); 
+        await createMeeting({ title: meetingTitle, type: meetingType, meetingId: id });
         addNotification({
           type: "success",
           title: "Meeting created",
@@ -62,16 +59,15 @@ function PreJoinContent() {
         });
         navigate(`/meeting/${id}`);
       } catch (error) {
-        console.log(error , "error from create meeting in prejoin");
+        console.log(error, "error from create meeting in prejoin");
         addNotification({
           type: "error",
           title: "Failed to create meeting",
           message: "Please try again later",
         });
       }
-
     } else {
-      // ✅ We don't have id → user is joining existing meeting → ask for code and addParticipant
+      // ✅ Joining existing meeting
       if (!meetingCodeInput.trim()) {
         addNotification({
           type: "error",
@@ -112,10 +108,11 @@ function PreJoinContent() {
             </div>
           </div>
         </div>
+
         <div className="glass backdrop-blur-sm border-t px-6 py-4 animate-slide-in-up">
           <div className="flex items-center justify-center space-x-6">
             <div className="flex items-center space-x-4">
-              {id && (
+              {id ? (
                 <>
                   <Input
                     placeholder="Enter the title of the meeting"
@@ -124,16 +121,15 @@ function PreJoinContent() {
                     className="glass glow ripple"
                   />
                   <select
-                  value={meetingType}
-                  onChange={(e) => setMeetingType(e.target.value)}
-                  className="border rounded-md px-2 py-2 bg-background text-foreground glass glow ripple"
-                >
-                  <option value="group">Group</option>
-                  <option value="1v1">1v1</option>
-                </select>
+                    value={meetingType}
+                    onChange={(e) => setMeetingType(e.target.value)}
+                    className="border rounded-md px-2 py-2 bg-background text-foreground glass glow ripple"
+                  >
+                    <option value="group">Group</option>
+                    <option value="1v1">1v1</option>
+                  </select>
                 </>
-              )}
-              {!id && (
+              ) : (
                 <Input
                   placeholder="Enter the meeting ID"
                   value={meetingCodeInput}
@@ -149,6 +145,7 @@ function PreJoinContent() {
                 <Users className="w-4 h-4 mr-2" />
                 {id ? "Create Meeting" : "Join Meeting"}
               </Button>
+              {id && <CopyableText value={id} />}
             </div>
           </div>
         </div>

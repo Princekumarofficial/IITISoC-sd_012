@@ -24,3 +24,19 @@ export function getEmojiFromEmotion(emotion: string): string {
 
   return emojiMap[lowerEmotion] ?? "❓";
 }
+
+
+// Utility function to map emoji back to emotion
+export function getEmotionFromEmoji(emoji: string): EmotionType | "unknown" {
+  const reverseEmojiMap: Record<string, EmotionType> = {
+    "😐": "neutral",
+    "😄": "happy",
+    "😢": "sad",
+    "😠": "angry",
+    "😨": "fear",
+    "🤢": "disgusted",
+    "😲": "surprised",
+  };
+
+  return reverseEmojiMap[emoji] ?? "unknown";
+}
