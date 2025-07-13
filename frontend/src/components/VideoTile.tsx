@@ -1,11 +1,11 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useEmotionDetection } from "../hooks/useEmotionDetection";
 import { FaceLandmarks68 } from "@vladmandic/face-api";
 import { getEmojiFromEmotion, getEmotionFromEmoji } from "../utils/getEmoji";
 import { LandmarkSection } from "../hooks/useSFUClient";
 
 export interface VideoTileProps {
-  stream: MediaStream|null;
+  stream: MediaStream | null;
   name: string;
   isLocal?: boolean;
   muted?: boolean;
@@ -32,6 +32,7 @@ export const VideoTile: React.FC<VideoTileProps> = ({
   showFaceSwap = false,
   className = "",
   style = {},
+ 
   onLocalEmotionDetected,
   enableLocalEmotionDetection = false,
   landmarks,
@@ -47,6 +48,8 @@ export const VideoTile: React.FC<VideoTileProps> = ({
     if (videoRef.current && stream) {
       videoRef.current.srcObject = stream;
     }
+
+
   }, [stream]);
 
   // Hook: Only for local video
@@ -122,7 +125,7 @@ export const VideoTile: React.FC<VideoTileProps> = ({
     const render = () => {
 
       // if(!isLocal)
-        // console.log(showEmoji);
+      // console.log(showEmoji);
       if (
         canvas.width !== video.videoWidth ||
         canvas.height !== video.videoHeight
@@ -134,9 +137,6 @@ export const VideoTile: React.FC<VideoTileProps> = ({
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       const landmarks = landmarksRef.current;
       const emoji = getEmojiFromEmotion(emojiRef.current);
-
-  
-    
 
 
       if (landmarks) {
@@ -220,15 +220,18 @@ export const VideoTile: React.FC<VideoTileProps> = ({
       className={`relative rounded-lg overflow-hidden bg-black w-full aspect-video ${className}`}
       style={style}
     >
-      <video
-        ref={videoRef}
-        autoPlay
-        playsInline
-        muted={isLocal || muted}
-        className="w-full h-full object-cover"
-      />
+       
+        <video
+          ref={videoRef}
+          autoPlay
+          playsInline
+          muted={isLocal || muted}
+          className="w-full h-full object-cover"
+        />
+       
+ 
 
-      {((isLocal && enableLocalEmotionDetection && showEmoji) || (!isLocal && showEmoji)) && (
+      {((isLocal && enableLocalEmotionDetection && showEmoji) || (!isLocal && showEmoji)) && (!!(videoRef.current?.srcObject as MediaStream)?.getVideoTracks()[0]?.enabled) && (
         <canvas
           ref={canvasRef}
           className="absolute top-0 left-0 w-full h-full pointer-events-none"
@@ -241,12 +244,13 @@ export const VideoTile: React.FC<VideoTileProps> = ({
         </div>
       )}
 
-      {emotion && (!isLocal || enableLocalEmotionDetection) && (
+      {emotion && (!isLocal || enableLocalEmotionDetection) && (!!(videoRef.current?.srcObject as MediaStream)?.getVideoTracks()[0]?.enabled) && (
         <div className="absolute top-2 right-2 text-3xl animate-bounce">{emotion}</div>
       )}
+
       <div className="absolute bottom-2 left-2 text-white bg-black/60 px-2 py-1 text-xs rounded">
         {name} {emotionConfidence ? `(${(emotionConfidence * 100).toFixed(0)}%)` : ""}
       </div>
     </div>
-  );
+  )
 };

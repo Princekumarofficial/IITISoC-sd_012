@@ -225,7 +225,11 @@ export function useSFUClient(
     const toggleMic = async () => {
         if (!audioProducer.current) return;
 
-        const { selectedMicrophone, setAudioEnabled } = useMediaStore.getState();
+        const {
+            selectedMicrophone,
+            setAudioEnabled,
+            setStream,
+        } = useMediaStore.getState();
 
         const isTrackEnded = localStream?.getAudioTracks().every((t) => t.readyState === "ended");
         const isPaused = audioProducer.current.paused;
@@ -247,17 +251,24 @@ export function useSFUClient(
 
             await audioProducer.current.replaceTrack({ track: newAudioTrack });
 
-            const newCombinedStream = new MediaStream([
+            const combinedStream = new MediaStream([
                 newAudioTrack,
-                ...localStream!.getVideoTracks().filter((t) => t.readyState !== "ended"),
+                ...localStream?.getVideoTracks().filter((t) => t.readyState !== "ended") || [],
             ]);
-            setLocalStream(newCombinedStream);
 
+            setLocalStream(combinedStream);
+            setStream(combinedStream);
             audioProducer.current.resume();
             setAudioEnabled(true);
         } else {
             audioProducer.current.pause();
-            localStream?.getAudioTracks().forEach((track) => track.stop());
+            localStream?.getAudioTracks().forEach((t) => t.stop());
+
+            const remainingTracks = localStream?.getVideoTracks() || [];
+            const newStream = new MediaStream(remainingTracks);
+
+            setLocalStream(newStream);
+            setStream(newStream);
             setAudioEnabled(false);
         }
     };
@@ -265,7 +276,7 @@ export function useSFUClient(
     const toggleCam = async () => {
         if (!videoProducer.current) return;
 
-        const { selectedCamera, setVideoEnabled } = useMediaStore.getState();
+        const { selectedCamera, setVideoEnabled , setStream } = useMediaStore.getState();
 
         const isTrackEnded = localStream?.getVideoTracks().every((t) => t.readyState === "ended");
         const isPaused = videoProducer.current.paused;
@@ -292,13 +303,15 @@ export function useSFUClient(
                 ...localStream!.getAudioTracks(),
             ]);
             setLocalStream(newCombinedStream);
+            setStream(newCombinedStream)
+            setVideoEnabled(true);
 
             videoProducer.current.resume();
-            setVideoEnabled(true);
         } else {
             videoProducer.current.pause();
             localStream?.getVideoTracks().forEach((track) => track.stop());
             setVideoEnabled(false);
+            
         }
     };
 
