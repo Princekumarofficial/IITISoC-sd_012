@@ -1,47 +1,44 @@
-import mongoose , {Schema} from "mongoose" ;
+import mongoose from "mongoose";
 
 const participantSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: true,
-  },
-  joinedAt: {
-    type: Date,
-    required: true,
-  },
-  leftAt: {
-    type: Date,
-    required: true,
-  },
-  emotions: [
-    {
-      type: String, // e.g., "happy", "neutral"
-    },
-  ],
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  name: String,
+  avatar: String,
+  joinTime: Date,
+  // leaveTime : Date,
+  emotions: [String],
 });
 
-const MeetingCallSchema = new Schema({
-    meetingid : {
-        type: String,
-        required : true ,
-        unique : true ,
-    },
-    name : {
-        type : String , 
-        required : true , 
-    },
-    startTime: {
-      type: Date,
-      required: true,
-    },
-    endTime: {
-      type: Date,
-      required: true,
-    },
-    participants: [participantSchema],
-    
-    
-   
-} , {timestamps : true});
-const MeetingCall = mongoose.model("MeetingCall" ,MeetingCallSchema)
-export default MeetingCall ;
+const chatMessageSchema = new mongoose.Schema({
+  sender: String,
+  message: String,
+  createdAt: { type: Date, default: Date.now },
+});
+
+const topEmotionSchema = new mongoose.Schema({
+  emoji: String,
+  count: Number,
+});
+
+const MeetingCallSchema = new mongoose.Schema({
+  meetingId:String ,
+  title: String,
+  type: { type: String, enum: ["group", "1-on-1"], default: "group" },
+  host: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  hostname:String,
+  startTime: Date,
+  endTime: Date,
+  duration: String,
+
+  participants: [participantSchema],
+  chatMessages: [chatMessageSchema],
+
+  emotionAnalytics: {
+    totalEmotions: Number,
+    topEmotions: [topEmotionSchema],
+  },
+}, { timestamps: true });
+
+const MeetingCall  =  mongoose.model("MeetingCall", MeetingCallSchema);
+
+ export default MeetingCall ;

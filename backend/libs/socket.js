@@ -22,6 +22,11 @@ const userSocketMap = {}; // {userId: socketId}
 io.on("connection", (socket) => {
   console.log("New client connected:", socket.id);
  
+  // ✅ NEW: Join meeting room
+  socket.on("joinMeetingRoom", (meetingId) => {
+    console.log(`User ${userId} joined meeting room ${meetingId}`);
+    socket.join(meetingId);   // socket.io built-in
+  });
   
 
 

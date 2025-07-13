@@ -1,7 +1,6 @@
 // config.js
 
 
-
 // Notification Messages
 export const API_NOTIFICATION_MESSAGES = {
   loading: {
@@ -41,15 +40,28 @@ export const SERVICE_URLS = {
   method: "POST",
   data: { text , image},
 }),
-  getMessages : (id) => ({ url : `/create/${id}` , method : 'GET'}),
+  getMessages : (meetingid) => ({ url : `/create/${meetingid}` , method : 'GET'}),
 
-  // newChat: { url: '/newChat', method: 'POST' },
-  // getAllChat: { url: '/chats', method: 'GET', query: true },
+  
 
-  // newRatings: { url: '/rating', method: 'POST' },
-  // getRatings: (username) => ({
-  //   url: `/ratings/${username}`,
-  //   method: 'GET',
-  //   query: true,
-  // }),
-};
+   // CRUD
+  createMeeting: ({meetingId ,title , type}) => ({
+     url: `/createmeeting/${meetingId}`,
+      method: 'POST' ,
+     data:{title , type},
+    }),
+
+  getMeetingById: (id) => ({ url: `/getmeetings/${id}`, method: 'GET' }),
+
+  // Add participant
+  addParticipant: (id) => ({ url: `/meeting/add-participant/${id}`, method: 'PUT' }),
+
+  // Add chat message
+  addMessage: ({meetingId , message}) => ({ url: `/meeting/add-message/${meetingId}`, method: 'PUT' ,
+  data : {message}}),
+
+  // Add emotion
+  addEmotion: (id) => ({ url: `/meeting/add-emotion/${id}`, method: 'PUT' }),
+  
+  getMeetingsForUser: {url : "/usermeetings" , method : 'GET'} ,
+}; 

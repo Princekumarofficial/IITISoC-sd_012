@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState ,useEffect} from "react"
 import { useNavigate } from "react-router-dom";
 import { Button } from "../components/ui/Button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/Card"
@@ -17,51 +17,71 @@ import { Navbar } from "../components/Navbar"
 import { Footer } from "../components/Footer"
 import { createMeetingRoom } from "../utils/create-meeting";
 import { useAuthStore } from "../store/useAuthStore";
-// Mock data for call history
-const callHistory = [
-  {
-    id: "1",
-    title: "Team Standup",
-    participants: ["Alice", "Bob", "Charlie"],
-    duration: "45 min",
-    time: "2 hours ago",
-    emotions: ["😊", "🤔", "👍"],
-    type: "group",
-    mood: "positive",
-  },
-  {
-    id: "2",
-    title: "Client Presentation",
-    participants: ["Sarah Johnson"],
-    duration: "1h 20min",
-    time: "1 day ago",
-    emotions: ["😮", "👏", "💡"],
-    type: "1-on-1",
-    mood: "excited",
-  },
-  {
-    id: "3",
-    title: "Project Review",
-    participants: ["Mike", "Lisa", "Tom", "Emma"],
-    duration: "30 min",
-    time: "3 days ago",
-    emotions: ["😄", "🎉", "✨"],
-    type: "group",
-    mood: "celebratory",
-  },
-]
+import API from "../service/api";
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
+dayjs.extend(relativeTime);
+
 
 function DashboardContent() {
-  const { authUser} = useAuthStore();
-
+  const { authUser } = useAuthStore();
   const [activeTab, setActiveTab] = useState("history")
   const [showSettings, setShowSettings] = useState(false)
   const [showProfile, setShowProfile] = useState(false)
   const [showCameraTest, setShowCameraTest] = useState(false)
   const [showCallDetails, setShowCallDetails] = useState(false)
-  const [selectedCall, setSelectedCall] = useState<any>(null)
- const navigate = useNavigate();
+  const [selectedMeetingId, setSelectedMeetingId] = useState<string | null>(null)
+  const [allCalls, setAllCalls] = useState<any[]>([])
+  const navigate = useNavigate();
   const { addNotification } = useNotifications()
+
+
+
+useEffect(() => {
+    const fetchMeetings = async () => {
+      try {
+        const res = await API.getMeetingsForUser();
+        const meetings = res.data;
+        const mapped = meetings.map((m: any) => ({
+          id: m._id,
+          title: m.title,
+          participants: m.participants.map((p: any) => p.name),
+          duration: getDuration(m.startTime, m.endTime || m.emotionAnalytics?.updatedAt),
+          time: dayjs(m.endTime || m.emotionAnalytics?.updatedAt || m.startTime).fromNow(),
+          type: m.type,
+          raw: m
+        }));
+        setAllCalls(mapped);
+      } catch (err) {
+        console.error("Error fetching meetings", err);
+      }
+    }
+    fetchMeetings();
+  }, []);
+
+
+  const getDuration = (start: string, end: string) => {
+    if (!start || !end) return "Unknown";
+    const diffMin = dayjs(end).diff(dayjs(start), 'minute');
+    const hours = Math.floor(diffMin / 60);
+    const minutes = diffMin % 60;
+    return hours > 0 ? `${hours}h ${minutes}min` : `${minutes} min`;
+  }
+
+
+  const getTopEmojis = (meeting: any) => {
+    // Tumhare meeting.emotionAnalytics ya meeting.participants se top emojis nikal sakte ho
+    // Abhi demo ke liye fix return kar rahe hain
+    return ["😊", "👍", "🎉"];
+  }
+
+  const getMood = (meeting: any) => {
+    // Tumhare meeting.emotionAnalytics se mood calculate kar sakte ho
+    // Abhi demo: "positive" / "excited" / "celebratory"
+    return "positive";
+  }
+
+
 
   const handleJoinMeeting = async() => {
    
@@ -102,9 +122,9 @@ function DashboardContent() {
     }
   }
 
-  const handleViewDetails = (call: any) => {
-    setSelectedCall(call)
-    setShowCallDetails(true)
+  const handleViewDetails = (meetingId: string) => {
+    setSelectedMeetingId(meetingId);
+    setShowCallDetails(true);
   }
 
   return (
@@ -281,7 +301,7 @@ function DashboardContent() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {callHistory.map((call, index) => (
+                    {allCalls.map((call, index) => (
                       <Card
                         key={call.id}
                         className="glass hover:glow transition-all cursor-pointer ripple"
@@ -292,6 +312,7 @@ function DashboardContent() {
                             <div className="flex-1">
                               <div className="flex items-center space-x-3 mb-3">
                                 <h4 className="font-semibold text-lg">{call.title}</h4>
+                                <p className="font-semibold text-lg">{call.hostname}</p>
                                 <Badge
                                   variant={call.type === "group" ? "default" : "secondary"}
                                   className="bg-gradient-to-r from-primary/20 to-blue-600/20"
@@ -321,14 +342,14 @@ function DashboardContent() {
                                   <span className="text-sm text-muted-foreground">Top emotions:</span>
                                 </div>
                                 <div className="flex space-x-1">
-                                  {call.emotions.map((emoji, index) => (
+                                  {/* {call.emotions.map((emoji, index) => (
                                     <span
                                       key={index}
                                       className="text-xl hover:scale-125 transition-transform cursor-pointer"
                                     >
                                       {emoji}
                                     </span>
-                                  ))}
+                                  ))} */}
                                 </div>
                               </div>
                             </div>
@@ -337,7 +358,7 @@ function DashboardContent() {
                               variant="outline"
                               size="sm"
                               className="glass glow ripple"
-                              onClick={() => handleViewDetails(call)}
+                              onClick={() => handleViewDetails(call.id)}
                             >
                               View Details
                             </Button>
@@ -360,7 +381,7 @@ function DashboardContent() {
       <CallDetailsModal
         open={showCallDetails}
         onOpenChange={setShowCallDetails}
-        call={selectedCall || callHistory[0]}
+        meetingId={selectedMeetingId ?? ""}
       />
     </div>
   )

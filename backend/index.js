@@ -10,7 +10,7 @@ import router from "./routes/routes.js";
 import handleWebSocketConnection from "./sfu/wsHandler.js";
 import {app , server} from "./libs/socket.js"
 ;
-
+ 
 
 
 // Middlewares
@@ -19,7 +19,7 @@ app.use(express.json());
 app.use(cookieParser());
 app.use("/api", router);
 
-// Connect DB
+// Connect DB 
 connectDB();
 
 // // Setup mediasoup worker and WebSocket SFU
@@ -44,8 +44,8 @@ server.on("upgrade", (request, socket, head) => {
   } else {
     socket.destroy();  // unknown route => destroy
   }
-});
-
+});  
+ 
 // Start server
 const PORT = 8000;
 server.listen(PORT, () => {

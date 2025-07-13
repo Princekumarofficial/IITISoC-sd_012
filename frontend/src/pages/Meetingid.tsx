@@ -34,51 +34,21 @@ import { NotificationProvider, useNotifications } from "../components/Notificati
 import { getEmojiFromEmotion } from "../utils/getEmoji";
 import { useParams } from "react-router-dom";
 import type { FaceLandmarks68 } from "@vladmandic/face-api";
-// Mock participants data
-const participants = [
-  {
-    id: "1",
-    name: "You",
-    isLocal: true,
-    isMuted: false,
-    isVideoOn: true,
-    emotion: "",
-    emotionConfidence: 0.85,
-    stream: null,
-  },
-  {
-    id: "2",
-    name: "Alice Johnson",
-    isLocal: false,
-    isMuted: false,
-    isVideoOn: true,
-    emotion: "",
-    emotionConfidence: 0.72,
-    stream: null,
-  },
-  {
-    id: "3",
-    name: "Bob Smith",
-    isLocal: false,
-    isMuted: true,
-    isVideoOn: true,
-    emotion: "👍",
-    emotionConfidence: 0.91,
-    stream: null,
-  },
-  {
-    id: "4",
-    name: "Charlie Brown",
-    isLocal: false,
-    isMuted: false,
-    isVideoOn: false,
-    emotion: "😄",
-    emotionConfidence: 0.68,
-    stream: null,
-  },
-]
+import { useMeetingChatStore } from "../store/useMeetingStore";
+
 
 function MeetingContent() {
+  //pull data from meetingstore
+  const {
+  meeting,
+  participants,
+  fetchMeetingById,
+  subscribeToMeetingMessages,
+  unsubscribeFromMeetingMessages,
+  } = useMeetingChatStore()
+
+
+
   const { id } = useParams();
   const [isMuted, setIsMuted] = useState(false)
   const [isVideoOn, setIsVideoOn] = useState(true)
@@ -106,6 +76,19 @@ function MeetingContent() {
   const [localEmotionConfidence, setLocalEmotionConfidence] = useState<number>(0);
   const [localLandmarks, setlocalLandmarks] = useState<FaceLandmarks68| null>(null);
   
+  //import data ok and socket for chat message
+  useEffect(() => {
+  if (!id) return;
+
+  fetchMeetingById(id);
+  subscribeToMeetingMessages(id);
+
+  return () => unsubscribeFromMeetingMessages();
+}, [id, fetchMeetingById, subscribeToMeetingMessages, unsubscribeFromMeetingMessages]);
+
+
+
+
   // Meeting timer
   useEffect(() => {
     const timer = setInterval(() => {
@@ -206,10 +189,10 @@ const handleLocalEmotionDetected = ({
 
   return (
     <>
-      <Navbar />
-      <div className="meeting-container bg-gradient-to-br from-background via-primary/5 to-blue-600/5 flex flex-col relative overflow-hidden my-16">
+       <Navbar />
+      <div className="meeting-container bg-gradient-to-br from-background via-primary/5 to-blue-600/5 flex flex-col relative overflow-hidden my-2 h-full">
         <TailCursor />
-
+          
 
         {/* Header */}
         <header className="glass backdrop-blur-sm border-b px-6 py-4 flex items-center justify-between animate-slide-in-left">
@@ -219,8 +202,8 @@ const handleLocalEmotionDetected = ({
                 <Video className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h1 className="font-semibold text-lg">Meeting Room</h1>
-                <p className="text-xs text-muted-foreground">ID: {id}</p>
+                <h1 className="font-semibold text-lg">  {meeting?.title || "Meeting Room"}</h1>
+                <p className="text-xs text-muted-foreground">ID:{meeting?._id || id}</p>
               </div>
             </div>
 
@@ -255,8 +238,10 @@ const handleLocalEmotionDetected = ({
             </Button>
           </div>
         </header>
-
-        <div className="flex flex-1 overflow-hidden">
+        
+        
+          <div className="flex flex-1 overflow-hidden h-screen my-16
+">
           {/* Main Video Area */}
           <div className="flex-1 meeting-main">
             <div className="h-full p-6">
@@ -339,7 +324,7 @@ const handleLocalEmotionDetected = ({
         </div>
 
         {/* Control Bar */}
-        <div className="glass backdrop-blur-sm border-t px-6 py-4 animate-slide-in-up">
+        <div className="glass backdrop-blur-sm border-t px-6 py-4 animate-slide-in-up z-20">
           <div className="flex items-center justify-center space-x-6">
             {/* Primary Controls */}
             <div className="flex items-center space-x-4">
@@ -388,7 +373,7 @@ const handleLocalEmotionDetected = ({
             <Separator orientation="vertical" className="h-10" />
 
             {/* Feature Controls */}
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-3 ">
               <Button
                 variant={isEmotionDetectionOn ? "default" : "outline"}
                 size="sm"
@@ -467,7 +452,9 @@ const handleLocalEmotionDetected = ({
             </Button>
           </div>
         </div>
-      </div>
+        </div>
+        
+    
     </>
   )
 }
