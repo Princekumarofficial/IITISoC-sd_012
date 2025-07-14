@@ -34,7 +34,7 @@ import { NotificationProvider, useNotifications } from "../components/Notificati
 import { getEmojiFromEmotion } from "../utils/getEmoji";
 import { useParams } from "react-router-dom";
 import type { FaceLandmarks68 } from "@vladmandic/face-api";
-
+import { ParticipantsList } from "../components/Participants";
 import { useMeetingChatStore } from "../store/useMeetingStore";
 
 
@@ -52,6 +52,7 @@ function MeetingContent() {
   subscribeToMeetingMessages,
   unsubscribeFromMeetingMessages,
   } = useMeetingChatStore()
+
 
 
 
@@ -82,6 +83,18 @@ function MeetingContent() {
   const [localEmotion, setLocalEmotion] = useState<string>("");
   const [localEmotionConfidence, setLocalEmotionConfidence] = useState<number>(0);
   const [localLandmarks, setlocalLandmarks] = useState<FaceLandmarks68 | LandmarkSection | undefined>();
+
+
+  const participantsList = [
+  {
+    id: "local",
+    name: "You",
+  },
+  ...remoteStreams.map((remote) => ({
+    id: remote.peerId,
+    name: remote.peerName,
+  })),
+];
 
   useEffect(() => {
   const { stream } = useMediaStore.getState();
@@ -228,7 +241,7 @@ useEffect(() => {
               </div>
               <div>
                 <h1 className="font-semibold text-lg">  {meeting?.title || "Meeting Room"}</h1>
-                <p className="text-xs text-muted-foreground">ID:{meeting?._id || id}</p>
+                <p className="text-xs text-muted-foreground">ID:{id}</p>
               </div>
             </div>
 
@@ -358,11 +371,22 @@ useEffect(() => {
                     <MessageSquare className="w-4 h-4 mr-1" />
                     Chat
                   </Button>
+                  <Button
+                    variant={activeTab === "participants" ? "secondary" : "ghost"}
+                    size="sm"
+                    onClick={() => setActiveTab("participants")}
+                    className="flex-1 ripple"
+                  >
+                    <MessageSquare className="w-4 h-4 mr-1" />
+                   Participants
+                  </Button>
                 </div>
               </div>
 
               <div className="flex-1 overflow-y-auto">
-                {activeTab === "emotions" ? <EmotionFeed participants={participants} /> : <ChatPanel />}
+                {activeTab === "emotions" &&<EmotionFeed participants={participants}/>}
+                {activeTab === "chat" &&<ChatPanel/>}
+                {activeTab === "participants" &&<ParticipantsList participants={participantsList}/>}
               </div>
             </aside>
           )}

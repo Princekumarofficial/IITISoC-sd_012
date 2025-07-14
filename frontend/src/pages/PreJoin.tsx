@@ -11,6 +11,7 @@ import { CameraManager } from "../components/Camera-manager";
 import { Users } from "lucide-react";
 import { useMeetingChatStore } from "../store/useMeetingStore";
 import { CopyableText } from "../components/ui/CopyableText";
+import { useMediaStore } from "../store/useMediaStore";
 
 function PreJoinContent() {
   const { id } = useParams(); // if new meeting created, id param will be there
@@ -49,6 +50,17 @@ function PreJoinContent() {
         });
         return;
       }
+      const { stream } = useMediaStore.getState();
+      if(!stream)
+      {
+         addNotification({
+          type: "error",
+          title: "Camera and mic not joined",
+          message: "Please join camera and microphone before joining the meet",
+        });
+        return;
+        
+      }
 
       try {
         await createMeeting({ title: meetingTitle, type: meetingType, meetingId: id });
@@ -75,6 +87,17 @@ function PreJoinContent() {
           message: "Please enter a meeting ID to join",
         });
         return;
+      }
+        const { stream } = useMediaStore.getState();
+      if(!stream)
+      {
+         addNotification({
+          type: "error",
+          title: "Camera and mic not joined",
+          message: "Please join camera and microphone before joining the meet",
+        });
+        return;
+        
       }
 
       try {

@@ -220,7 +220,7 @@ useEffect(() => {
             <main className="flex-1 space-y-6">
               <div className="slide-in-up">
                 <h2 className="text-3xl font-bold mb-2 bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">
-                  Welcome back, John! 👋
+                  Welcome back, {authUser.username}! 👋
                 </h2>
                 <p className="text-muted-foreground">Ready for your next emotion-powered video call?</p>
               </div>

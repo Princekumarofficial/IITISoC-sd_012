@@ -11,11 +11,24 @@ export function Avatar({ className = "", children }: AvatarProps) {
   )
 }
 
-export function AvatarImage({ src, alt, className = "" }: { src?: string; alt?: string; className?: string }) {
-  if (!src) return null
+import { useState } from "react"
+
+export function AvatarImage({
+  src,
+  alt,
+  className = "",
+}: { src?: string; alt?: string; className?: string }) {
+  const [imgSrc, setImgSrc] = useState(src)
+
+  if (!imgSrc) return null
 
   return (
-    <img className={`aspect-square h-full w-full ${className}`} src={src || "/profile.jpg"} alt={alt || "Avatar"} />
+    <img
+      className={`aspect-square h-full w-full object-cover ${className}`}
+      src={imgSrc}
+      alt={alt || "Avatar"}
+      onError={() => setImgSrc(undefined)} // this will trigger fallback
+    />
   )
 }
 
