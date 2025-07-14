@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useMemo } from "react"
 import { useNavigate } from "react-router-dom";
 import { Navbar } from "../components/Navbar";
 import { Button } from "../components/ui/Button"
@@ -41,16 +41,16 @@ import { useMeetingChatStore } from "../store/useMeetingStore";
 import type { LandmarkSection } from "../hooks/useSFUClient";
 import { useMediaStore } from "../store/useMediaStore";
 import { useAuthStore } from "../store/useAuthStore";
-
+import RemoteStreamTiles from "../components/RemoteStreamTiles";
 
 function MeetingContent() {
   //pull data from meetingstore
   const {
-  meeting,
-  participants,
-  fetchMeetingById,
-  subscribeToMeetingMessages,
-  unsubscribeFromMeetingMessages,
+    meeting,
+    participants,
+    fetchMeetingById,
+    subscribeToMeetingMessages,
+    unsubscribeFromMeetingMessages,
   } = useMeetingChatStore()
 
 
@@ -74,7 +74,7 @@ function MeetingContent() {
   }>({});
   const navigate = useNavigate();
   const { addNotification } = useNotifications()
-  const { localStream, remoteStreams, toggleMic, toggleCam, sendEmotionUpdate } = useSFUClient(id || "", (userId, emotion, confidence, landmarks, isOverlayOn) => {
+  const { localStream, remoteStreams, toggleMic, toggleCam, sendEmotionUpdate, startScreenShare, stopScreenShare } = useSFUClient(id || "", (userId, emotion, confidence, landmarks, isOverlayOn) => {
     setUserEmotions((prev) => ({
       ...prev,
       [userId]: { emotion, confidence, landmarks, isOverlayOn },
@@ -83,27 +83,27 @@ function MeetingContent() {
   const [localEmotion, setLocalEmotion] = useState<string>("");
   const [localEmotionConfidence, setLocalEmotionConfidence] = useState<number>(0);
   const [localLandmarks, setlocalLandmarks] = useState<FaceLandmarks68 | LandmarkSection | undefined>();
-
+  const [isScreenSharing, setIsScreenSharing] = useState<Boolean>(false);
 
   const participantsList = [
-  {
-    id: "local",
-    name: "You",
-  },
-  ...remoteStreams.map((remote) => ({
-    id: remote.peerId,
-    name: remote.peerName,
-  })),
-];
+    {
+      id: "local",
+      name: "You",
+    },
+    ...remoteStreams.map((remote) => ({
+      id: remote.peerId,
+      name: remote.peerName,
+    })),
+  ];
 
   useEffect(() => {
-  const { stream } = useMediaStore.getState();
-  if (!stream) {
-    console.warn("Stream is null, skipping join.");
-    stopMediaTracks(localStream);
-    navigate("/dashboard");
-}
-}, []);
+    const { stream } = useMediaStore.getState();
+    if (!stream) {
+      console.warn("Stream is null, skipping join.");
+      stopMediaTracks(localStream);
+      navigate("/dashboard");
+    }
+  }, []);
 
   // Meeting timer
   useEffect(() => {
@@ -153,7 +153,7 @@ function MeetingContent() {
   };
 
   const handleLeaveMeeting = () => {
-     const stream = useMediaStore.getState().stream;
+    const stream = useMediaStore.getState().stream;
     if (stream) {
       stream.getTracks().forEach(track => track.stop());
       useMediaStore.getState().setStream(null); // Clear from store
@@ -169,20 +169,20 @@ function MeetingContent() {
     }, 1000)
   }
 
-// Handling setting stream to null on reload
-useEffect(() => {
-  const handleBeforeUnload = () => {
-    const stream = useMediaStore.getState().stream;
-    if (stream) {
-      stream.getTracks().forEach(track => track.stop());
-      useMediaStore.getState().setStream(null); // Clear from store
-    }
-    stopMediaTracks(localStream);
-  };
+  // Handling setting stream to null on reload
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      const stream = useMediaStore.getState().stream;
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+        useMediaStore.getState().setStream(null); // Clear from store
+      }
+      stopMediaTracks(localStream);
+    };
 
-  window.addEventListener("beforeunload", handleBeforeUnload);
-  return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-}, []);
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, []);
 
 
   const toggleFullscreen = () => {
@@ -227,10 +227,10 @@ useEffect(() => {
 
   return (
     <>
-       <Navbar />
+      <Navbar />
       <div className="meeting-container bg-gradient-to-br from-background via-primary/5 to-blue-600/5 flex flex-col relative overflow-hidden my-2 h-full">
         <TailCursor />
-          
+
 
         {/* Header */}
         <header className="glass backdrop-blur-sm border-b px-6 py-4 flex items-center justify-between animate-slide-in-left">
@@ -264,10 +264,14 @@ useEffect(() => {
           </div>
 
           <div className="flex items-center space-x-2 animate-slide-in-right">
-            <Button variant="ghost" size="sm" onClick={shareScreen} className="glass glow ripple">
+            {isScreenSharing ? <Button variant="ghost" size="sm" onClick={() => { setIsScreenSharing((prev) => !prev); stopScreenShare(); }} className="glass glow ripple">
               <Share className="w-4 h-4 mr-2" />
               Share
-            </Button>
+            </Button> :
+              <Button variant="ghost" size="sm" onClick={() => { setIsScreenSharing((prev) => !prev); startScreenShare(); }} className="glass glow ripple">
+                <Share className="w-4 h-4 mr-2" />
+                Share
+              </Button>}
             <Button variant="ghost" size="sm" onClick={toggleFullscreen} className="glass glow ripple">
               {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
             </Button>
@@ -276,9 +280,9 @@ useEffect(() => {
             </Button>
           </div>
         </header>
-        
-        
-          <div className="flex flex-1 overflow-hidden h-screen my-16
+
+
+        <div className="flex flex-1 overflow-hidden h-screen my-16
 ">
           {/* Main Video Area */}
           <div className="flex-1 meeting-main">
@@ -327,23 +331,14 @@ useEffect(() => {
                 </div>
 
                 {/* Other participants */}
-                {remoteStreams.map((remote) => {
-                  console.log(remote.stream);
-                  return (
-                    <VideoTile
-                      key={remote.peerId}
-                      stream={remote.stream}
-                      name={remote.peerName}
-                      isLocal={false}
-                      muted={false}
-                      emotion={getEmojiFromEmotion(userEmotions[remote.peerId]?.emotion)}
-                      emotionConfidence={userEmotions[remote.peerId]?.confidence}
-                      showEmoji={userEmotions[remote.peerId]?.isOverlayOn}
-                      showFaceSwap={isFaceSwapOn}
-                      landmarks={userEmotions[remote.peerId]?.landmarks}
-                    />
-                  )
-                })}
+                {remoteStreams.map((remote) => (
+                  <RemoteStreamTiles
+                    key={remote.peerId}
+                    remote={remote}
+                    emotionData={userEmotions[remote.peerId]}
+                    isFaceSwapOn={isFaceSwapOn}
+                  />
+                ))}
               </div>
             </div>
           </div>
@@ -378,15 +373,15 @@ useEffect(() => {
                     className="flex-1 ripple"
                   >
                     <MessageSquare className="w-4 h-4 mr-1" />
-                   Participants
+                    Participants
                   </Button>
                 </div>
               </div>
 
               <div className="flex-1 overflow-y-auto">
-                {activeTab === "emotions" &&<EmotionFeed participants={participants}/>}
-                {activeTab === "chat" &&<ChatPanel/>}
-                {activeTab === "participants" &&<ParticipantsList participants={participantsList}/>}
+                {activeTab === "emotions" && <EmotionFeed participants={participants} />}
+                {activeTab === "chat" && <ChatPanel />}
+                {activeTab === "participants" && <ParticipantsList participants={participantsList} />}
               </div>
             </aside>
           )}
@@ -521,9 +516,9 @@ useEffect(() => {
             </Button>
           </div>
         </div>
-        </div>
-        
-    
+      </div>
+
+
     </>
   )
 }

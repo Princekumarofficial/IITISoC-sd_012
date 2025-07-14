@@ -34,6 +34,7 @@ export function useSFUClient(
     const videoProducer = useRef<any>(null);
     const existingProducers = useRef<any[]>([]);
     const navigate = useNavigate();
+    const screenProducer = useRef<any>(null);
 
     useEffect(() => {
         const ws = new WebSocket("ws://localhost:8000/mediasoup");
@@ -117,6 +118,7 @@ export function useSFUClient(
             if (type === "consumersCreated") {
                 const newStreams: Record<string, RemoteStream> = {};
 
+
                 for (const consumerInfo of data) {
                     const consumer = await recvTransport.current.consume({
                         id: consumerInfo.id,
@@ -125,6 +127,12 @@ export function useSFUClient(
                         rtpParameters: consumerInfo.rtpParameters,
                     });
 
+                    console.log("🔍 Received track:", {
+                        kind: consumer.kind,
+                        label: consumer.track.label, // often says "screen" or "screen-capture"
+                        settings: consumer.track.getSettings(),
+                    });
+                    consumer.track._producerId = consumerInfo.producerId;
                     const peerId = consumerInfo.peerId;
                     const peerName = consumerInfo.peerName;
                     if (!newStreams[peerId]) newStreams[peerId] = { peerId, peerName, stream: new MediaStream() };
@@ -152,6 +160,37 @@ export function useSFUClient(
                     await consume(data.producerId);
                 }
             }
+
+
+            if (type === "producerClosed") {
+                const { producerId, peerId } = data;
+
+                console.log(`Producer ${producerId} from ${peerId} closed`);
+
+                setRemoteStreams((prev) => {
+                    const updated = [...prev];
+                    const peerStream = updated.find((s) => s.peerId === peerId);
+
+                    if (peerStream) {
+                        const stream = peerStream.stream;
+                        const before = stream.getTracks().length;
+
+                        // Remove only the track matching the producerId
+                        stream.getTracks().forEach((track) => {
+                            if ((track as any)._producerId === producerId) {
+                                stream.removeTrack(track);
+                            }
+                        });
+
+                        console.log(`🧹 Removed track from ${peerId}. Before: ${before}, After: ${stream.getTracks().length}`);
+                    }
+
+                    // Remove the whole stream if it's empty (optional)
+                    return updated.filter((s) => s.stream.getTracks().length > 0);
+                });
+            }
+
+
 
             if (type === "peerLeft") {
                 setRemoteStreams((prev) => prev.filter((s) => s.peerId !== data.peerId));
@@ -276,7 +315,7 @@ export function useSFUClient(
     const toggleCam = async () => {
         if (!videoProducer.current) return;
 
-        const { selectedCamera, setVideoEnabled , setStream } = useMediaStore.getState();
+        const { selectedCamera, setVideoEnabled, setStream } = useMediaStore.getState();
 
         const isTrackEnded = localStream?.getVideoTracks().every((t) => t.readyState === "ended");
         const isPaused = videoProducer.current.paused;
@@ -311,7 +350,7 @@ export function useSFUClient(
             videoProducer.current.pause();
             localStream?.getVideoTracks().forEach((track) => track.stop());
             setVideoEnabled(false);
-            
+
         }
     };
 
@@ -339,11 +378,60 @@ export function useSFUClient(
         );
     };
 
+    const startScreenShare = async () => {
+        try {
+            const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+            const screenTrack = screenStream.getVideoTracks()[0];
+
+            screenProducer.current = await sendTransport.current.produce({ track: screenTrack });
+
+            screenTrack.onended = () => {
+                stopScreenShare();
+            };
+
+            addNotification({
+                type: "success",
+                title: "Screen Sharing Started",
+                message: "You're now sharing your screen.",
+            });
+        } catch (err) {
+            console.error("Screen share error:", err);
+            addNotification({
+                type: "error",
+                title: "Screen Share Failed",
+                message: "Could not start screen sharing.",
+            });
+        }
+    };
+
+    const stopScreenShare = () => {
+        if (screenProducer.current) {
+
+            wsRef.current?.send(JSON.stringify({
+                type: "producerClosed",
+                data: {
+                    producerId: screenProducer.current.id,
+                    peerId: authUser._id,
+                },
+            }));
+            screenProducer.current.close();
+            screenProducer.current = null;
+        }
+
+        addNotification({
+            type: "info",
+            title: "Screen Sharing Stopped",
+            message: "Your screen share has ended.",
+        });
+    };
+
     return {
         localStream,
         remoteStreams,
         sendEmotionUpdate,
         toggleMic,
         toggleCam,
+        startScreenShare,
+        stopScreenShare,
     };
 }
