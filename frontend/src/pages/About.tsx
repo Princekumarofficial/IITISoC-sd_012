@@ -14,6 +14,7 @@ import {
   Twitter,
   Linkedin,
   Mail,
+  AlignCenter,
 } from "lucide-react"
 
 import { Button } from "../components/ui/Button"
@@ -60,29 +61,29 @@ const features = [
 
 const team = [
   {
-    name: "Dr. Sarah Chen",
-    role: "CEO & Co-Founder",
+    name: "Mr. Abhay Lodhi",
+    role: "Full stack developer",
     avatar: "/profile.jpg",
-    bio: "Former Google AI researcher with 10+ years in computer vision and emotion recognition.",
+    bio: "2nd year CSE student at IIT Indore",
   },
   {
-    name: "Michael Rodriguez",
-    role: "CTO & Co-Founder",
+    name: "Mr. Pratyush Gupta",
+    role: "Ml Engineer and Backend Develper",
     avatar: "/profile.jpg",
-    bio: "Ex-Zoom engineer specializing in real-time video processing and WebRTC technologies.",
+    bio: "2nd year MEMS student at IIT Indore",
   },
   {
-    name: "Dr. Emily Watson",
-    role: "Head of AI Research",
+    name: "Mr. Hemant Yadav",
+    role: "Full Stack developer",
     avatar: "/profile.jpg",
-    bio: "PhD in Machine Learning from MIT, published 50+ papers on facial emotion recognition.",
+    bio: "2nd year MEMS student at IIT Indore",
   },
-  {
-    name: "David Kim",
-    role: "Lead Product Designer",
-    avatar: "/profile.jpg",
-    bio: "Award-winning UX designer with experience at Apple and Microsoft, focused on accessible design.",
-  },
+  // {
+  //   name: "David Kim",
+  //   role: "Lead Product Designer",
+  //   avatar: "/profile.jpg",
+  //   bio: "Award-winning UX designer with experience at Apple and Microsoft, focused on accessible design.",
+  // },
 ]
 
 const stats = [
@@ -97,8 +98,8 @@ function AboutContent() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-primary/5 to-blue-600/5 relative">
-      <TailCursor/>
-      
+      <TailCursor />
+
 
       {/* Header */}
       <header className="glass border-b backdrop-blur-sm sticky top-0 z-40">
@@ -208,14 +209,21 @@ function AboutContent() {
             <h2 className="text-3xl font-bold">Meet Our Team</h2>
             <p className="text-lg text-muted-foreground">The brilliant minds behind MediCall's revolutionary technology</p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="flex flex-wrap justify-center gap-10">
             {team.map((member, index) => (
-              <Card key={index} className="glass glow text-center hover:scale-105 transition-transform animate-slide-in-up" style={{ animationDelay: `${index * 0.1}s` }}>
+              <Card
+                key={index}
+                className="glass glow text-center hover:scale-105 transition-transform animate-slide-in-up"
+                style={{
+                  animationDelay: `${index * 0.1}s`,
+                  width: "260px", // consistent card width
+                }}
+              >
                 <CardHeader>
                   <Avatar className="w-24 h-24 mx-auto mb-4">
                     <AvatarImage src={member.avatar} />
                     <AvatarFallback className="text-2xl bg-gradient-to-br from-primary to-blue-600 text-white">
-                      {member.name.split(" ").map(n => n[0]).join("")}
+                      {member.name.split(" ").map((n) => n[0]).join("")}
                     </AvatarFallback>
                   </Avatar>
                   <CardTitle className="text-lg">{member.name}</CardTitle>

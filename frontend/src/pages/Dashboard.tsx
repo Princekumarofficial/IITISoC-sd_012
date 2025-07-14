@@ -196,7 +196,7 @@ useEffect(() => {
                 <CardContent className="space-y-3">
                   <div className="flex justify-between items-center">
                     <span className="text-sm">Total Calls</span>
-                    <Badge variant="secondary">156</Badge>
+                    <Badge variant="secondary">{allCalls.length}</Badge>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-sm">Happy Moments</span>
