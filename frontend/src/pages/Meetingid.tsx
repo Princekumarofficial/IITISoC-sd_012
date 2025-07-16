@@ -282,12 +282,11 @@ function MeetingContent() {
         </header>
 
 
-        <div className="flex flex-1 overflow-hidden h-screen my-16
-">
+        <div className="flex flex-1 overflow-hidden h-screen my-16">
           {/* Main Video Area */}
           <div className="flex-1 meeting-main">
             <div className="h-full p-6">
-              <div className="h-full grid grid-cols-2 gap-6">
+              <div className="h-full grid auto-rows-[minmax(0,_1fr)] gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {/* Local video with camera manager */}
                 <div className="relative animate-fade-in">
                   {localStream && (
@@ -306,22 +305,16 @@ function MeetingContent() {
                       landmarks={localLandmarks}
                     />
                   )}
-                  {!localStream && (
-                    <VideoTile
-                      key="local"
-                      stream={localStream}
-                      name="You"
-                      isLocal
-                      muted={isMuted}
-                      emotion={getEmojiFromEmotion(localEmotion)}
-                      emotionConfidence={localEmotionConfidence}
-                      showEmoji={isEmojiOverlayOnRef.current}
-                      showFaceSwap={isFaceSwapOn}
-                      onLocalEmotionDetected={handleLocalEmotionDetected}
-                      enableLocalEmotionDetection={isEmotionDetectionOn}
-                      landmarks={localLandmarks}
+
+                  {/* Other participants */}
+                  {remoteStreams.map((remote) => (
+                    <RemoteStreamTiles
+                      key={remote.peerId}
+                      remote={remote}
+                      emotionData={userEmotions[remote.peerId]}
+                      isFaceSwapOn={isFaceSwapOn}
                     />
-                  )}
+                  ))}
 
                   {isFaceSwapOn && (
                     <div className="absolute inset-0 bg-gradient-to-br from-green-500/20 to-blue-500/20 rounded-lg flex items-center justify-center">
@@ -330,15 +323,6 @@ function MeetingContent() {
                   )}
                 </div>
 
-                {/* Other participants */}
-                {remoteStreams.map((remote) => (
-                  <RemoteStreamTiles
-                    key={remote.peerId}
-                    remote={remote}
-                    emotionData={userEmotions[remote.peerId]}
-                    isFaceSwapOn={isFaceSwapOn}
-                  />
-                ))}
               </div>
             </div>
           </div>
