@@ -216,26 +216,29 @@ export const VideoTile: React.FC<VideoTileProps> = ({
   }, [isLocal, enableLocalEmotionDetection, showEmoji]);
 
   return (
-    <div
-      className={`relative rounded-lg overflow-hidden bg-black w-full aspect-video ${className}`}
-      style={style}
-    >
-       
+     <div className="flex justify-center items-center">
+       <div className="relative w-fit h-full  overflow-hidden rounded-lg">
         <video
           ref={videoRef}
           autoPlay
           playsInline
           muted={isLocal || muted}
-          className="w-full h-full object-cover"
+          className=" h-full object-cover rounded-lg shadow"
         />
        
  
 
       {((isLocal && enableLocalEmotionDetection && showEmoji) || (!isLocal && showEmoji)) && (!!(videoRef.current?.srcObject as MediaStream)?.getVideoTracks()[0]?.enabled) && (
         <canvas
-          ref={canvasRef}
-          className="absolute top-0 left-0 w-full h-full pointer-events-none"
-        />
+        ref={canvasRef}
+        className="absolute top-0 left-0 w-full h-full object-cover pointer-events-none"
+        style={{
+          width: '100%',
+          height: '100%',
+          transform: 'translateZ(0)' // Optional: helps with rendering in some cases
+        }}
+      />
+
       )}
 
       {showFaceSwap && (
@@ -250,6 +253,7 @@ export const VideoTile: React.FC<VideoTileProps> = ({
 
       <div className="absolute bottom-2 left-2 text-white bg-black/60 px-2 py-1 text-xs rounded">
         {name} {emotionConfidence ? `(${(emotionConfidence * 100).toFixed(0)}%)` : ""}
+      </div>
       </div>
     </div>
   )

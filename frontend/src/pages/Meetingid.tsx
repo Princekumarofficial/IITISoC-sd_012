@@ -16,6 +16,8 @@ import {
   Smile,
   MessageSquare,
   Users,
+  Sun,
+  Moon,
   MoreVertical,
   Maximize,
   Minimize,
@@ -24,6 +26,9 @@ import {
   Sparkles,
   Zap,
   Clock,
+  User,
+  Settings,
+  LogOut,
 } from "lucide-react"
 import { VideoTile } from "../components/VideoTile"
 import { EmotionFeed } from "../components/Emotion-feed"
@@ -42,7 +47,11 @@ import type { LandmarkSection } from "../hooks/useSFUClient";
 import { useMediaStore } from "../store/useMediaStore";
 import { useAuthStore } from "../store/useAuthStore";
 import RemoteStreamTiles from "../components/RemoteStreamTiles";
-
+import useMaxTilesByScreen from "../hooks/useMaxTilesByScreen";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "../components/ui/Dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/Avatar";
+import { signOut } from "firebase/auth";
+import { auth } from "../service/firebase";
 function MeetingContent() {
   //pull data from meetingstore
   const {
@@ -84,7 +93,9 @@ function MeetingContent() {
   const [localEmotionConfidence, setLocalEmotionConfidence] = useState<number>(0);
   const [localLandmarks, setlocalLandmarks] = useState<FaceLandmarks68 | LandmarkSection | undefined>();
   const [isScreenSharing, setIsScreenSharing] = useState<Boolean>(false);
-
+  const [theme, setTheme] = useState("light");
+  const { authUser, logout } = useAuthStore();
+  const maxTiles = useMaxTilesByScreen();
   const participantsList = [
     {
       id: "local",
@@ -169,6 +180,27 @@ function MeetingContent() {
     }, 1000)
   }
 
+  const handleSignOut = async () => {
+    try {
+      await signOut(auth);
+      addNotification({
+        type: "info",
+        title: "Signing Out",
+        message: "See you next time!",
+      });
+      await logout();
+
+      setTimeout(() => navigate("/"), 1000);
+    } catch (error) {
+      console.error("Sign out error:", error);
+      addNotification({
+        type: "error",
+        title: "Error",
+        message: "Failed to sign out. Please try again.",
+      });
+    }
+
+  };
   // Handling setting stream to null on reload
   useEffect(() => {
     const handleBeforeUnload = () => {
@@ -225,27 +257,36 @@ function MeetingContent() {
 
 
 
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", theme === "dark");
+  }, [theme]);
+
+
+
   return (
     <>
-      <Navbar />
-      <div className="meeting-container bg-gradient-to-br from-background via-primary/5 to-blue-600/5 flex flex-col relative overflow-hidden my-2 h-full">
+      <div className="meeting-container bg-gradient-to-br from-background via-primary/5 to-blue-600/5 flex flex-col relative overflow-hidden  h-full">
+        {/* <Navbar /> */}
         <TailCursor />
 
 
         {/* Header */}
-        <header className="glass backdrop-blur-sm border-b px-6 py-4 flex items-center justify-between animate-slide-in-left">
-          <div className="flex items-center space-x-6">
+        <header className="glass  z-[50] backdrop-blur-sm border-b h-[10vh] px-4 py-3 flex  md:flex-nowrap items-center justify-between gap-4 md:gap-0 animate-slide-in-left">
+          {/* Left side: Logo + Title + Info */}
+          <div className="flex flex-col md:flex-row md:items-center md:space-x-6 space-y-2 md:space-y-0 w-full md:w-auto">
             <div className="flex items-center space-x-3">
               <div className="w-8 h-8 bg-gradient-to-br from-primary to-blue-600 rounded-lg flex items-center justify-center glow">
                 <Video className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h1 className="font-semibold text-lg">  {meeting?.title || "Meeting Room"}</h1>
-                <p className="text-xs text-muted-foreground">ID:{id}</p>
+                <h1 className="font-semibold text-base sm:text-lg truncate">
+                  {meeting?.title || "Meeting Room"}
+                </h1>
+                <p className="text-xs text-muted-foreground truncate ">ID: {id}</p>
               </div>
             </div>
 
-            <div className="flex items-center space-x-4">
+            <div className="flex flex-wrap items-center gap-2 md:space-x-4">
               <Badge variant="secondary" className="glass animate-scale-in">
                 <Users className="w-3 h-3 mr-1" />
                 {remoteStreams.length + 1} participants
@@ -263,65 +304,149 @@ function MeetingContent() {
             </div>
           </div>
 
-          <div className="flex items-center space-x-2 animate-slide-in-right">
-            {isScreenSharing ? <Button variant="ghost" size="sm" onClick={() => { setIsScreenSharing((prev) => !prev); stopScreenShare(); }} className="glass glow ripple">
-              <Share className="w-4 h-4 mr-2" />
-              Share
-            </Button> :
-              <Button variant="ghost" size="sm" onClick={() => { setIsScreenSharing((prev) => !prev); startScreenShare(); }} className="glass glow ripple">
-                <Share className="w-4 h-4 mr-2" />
-                Share
-              </Button>}
-            <Button variant="ghost" size="sm" onClick={toggleFullscreen} className="glass glow ripple">
-              {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
-            </Button>
-            <Button variant="ghost" size="sm" onClick={() => setShowSidebar(!showSidebar)} className="glass glow ripple">
-              <MoreVertical className="w-4 h-4" />
-            </Button>
+          {/* Right side: Buttons */}
+          <div className="flex header-buttons   items-center gap-2 animate-slide-in-right">
+            <div className="header-buttons-0 flex  gap-2" > <DropdownMenu  >
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className=" glass   glow ripple">
+                  <Avatar className="w-8 h-8">
+                    <AvatarImage src={authUser?.photoURL || "/profile.jpg"} />
+                    <AvatarFallback>
+                      {authUser?.username?.[0] || "U"}
+                    </AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="bg-background  border absolute z-[100] border-border rounded-md shadow-md  w-56 ">
+                <div className="flex items-center space-x-2 p-2">
+                  <Avatar className="w-8 h-8">
+                    <AvatarImage src={authUser?.photoURL || "/profile.jpg"} />
+                    <AvatarFallback>
+                      {authUser?.username?.[0] || "U"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex flex-col space-y-1">
+                    <p className="text-sm font-medium">{authUser?.username}</p>
+                    <p className="text-xs text-muted-foreground">{authUser?.email}</p>
+                  </div>
+                </div>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => navigate("/profilepage")}>
+                  <User className="w-4 h-4 mr-2" />
+                  Profile
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate("/settings")}>
+                  <Settings className="w-4 h-4 mr-2" />
+                  Settings
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Sign Out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                className="glass glow ripple"
+              >
+                <Sun className={`h-4 w-4 transition-all ${theme === "dark" ? "scale-0" : "scale-100"}`} />
+                <Moon className={`absolute h-4 w-4 transition-all ${theme === "dark" ? "scale-100" : "scale-0"}`} />
+              </Button>
+            </div>
+            <div className="header-buttons-1">
+              {isScreenSharing ? (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setIsScreenSharing((prev) => !prev);
+                    stopScreenShare();
+                  }}
+                  className="glass glow ripple"
+                >
+                  <Share className="w-4 h-4 mr-2" />
+                  Share
+                </Button>
+              ) : (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setIsScreenSharing((prev) => !prev);
+                    startScreenShare();
+                  }}
+                  className="glass glow ripple"
+                >
+                  <Share className="w-4 h-4 mr-2" />
+                  Share
+                </Button>
+              )}
+            </div>
+            <div className="flex gap-2 header-buttons-2 ">
+              <Button variant="ghost" size="sm" onClick={toggleFullscreen} className="glass glow ripple">
+                {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => setShowSidebar(!showSidebar)} className="glass glow ripple">
+                <MoreVertical className="w-4 h-4" />
+              </Button>
+
+            </div>
           </div>
         </header>
 
 
-        <div className="flex flex-1 overflow-hidden h-screen my-16">
+        <div className="flex flex-1 main-container  h-[75vh]">
           {/* Main Video Area */}
           <div className="flex-1 meeting-main">
-            <div className="h-full p-6">
-              <div className="h-full grid auto-rows-[minmax(0,_1fr)] gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {/* Local video with camera manager */}
-                <div className="relative animate-fade-in">
-                  {localStream && (
-                    <VideoTile
-                      key="local"
-                      stream={localStream}
-                      name="You"
-                      isLocal
-                      muted={isMuted}
-                      emotion={getEmojiFromEmotion(localEmotion)}
-                      emotionConfidence={localEmotionConfidence}
-                      showEmoji={isEmojiOverlayOnRef.current}
-                      showFaceSwap={isFaceSwapOn}
-                      onLocalEmotionDetected={handleLocalEmotionDetected}
-                      enableLocalEmotionDetection={isEmotionDetectionOn}
-                      landmarks={localLandmarks}
-                    />
-                  )}
+            {/* 🛠️ Modified: Responsive dynamic grid */}
+            <div className="h-full w-full p-4 overflow-auto">
+  <div className="grid gap-4 w-full h-full"
+  style={{
+    gridTemplateColumns: `repeat(auto-fit, minmax(300px, 1fr))`,
+    gridAutoRows: "minmax(200px, 1fr)" // Ensures consistent row height
+  }}
+>      {/* Local video with camera manager */}
 
-                  {/* Other participants */}
-                  {remoteStreams.map((remote) => (
+                {localStream && (
+                  <VideoTile
+                    key="local"
+                    stream={localStream}
+                    name="You"
+                    isLocal
+                    muted={isMuted}
+                    emotion={getEmojiFromEmotion(localEmotion)}
+                    emotionConfidence={localEmotionConfidence}
+                    showEmoji={isEmojiOverlayOnRef.current}
+                    showFaceSwap={isFaceSwapOn}
+                    onLocalEmotionDetected={handleLocalEmotionDetected}
+                    enableLocalEmotionDetection={isEmotionDetectionOn}
+                    landmarks={localLandmarks}
+                  />
+                )}
+
+                {/* Other participants */}
+
+                {remoteStreams.map((remote, index) => {
+                  if (index + 1 > maxTiles - 1) return null; // +1 for local tile
+                  return (
                     <RemoteStreamTiles
                       key={remote.peerId}
                       remote={remote}
                       emotionData={userEmotions[remote.peerId]}
                       isFaceSwapOn={isFaceSwapOn}
-                    />
-                  ))}
+                    />)
+                }
+                )}
 
-                  {isFaceSwapOn && (
-                    <div className="absolute inset-0 bg-gradient-to-br from-green-500/20 to-blue-500/20 rounded-lg flex items-center justify-center">
-                      <div className="text-6xl animate-pulse">🦸‍♂️</div>
-                    </div>
-                  )}
-                </div>
+                {isFaceSwapOn && (
+                  <div className="absolute inset-0 bg-gradient-to-br from-green-500/20 to-blue-500/20 rounded-lg flex items-center justify-center">
+                    <div className="text-6xl animate-pulse">🦸‍♂️</div>
+                  </div>
+                )}
+
 
               </div>
             </div>
@@ -329,9 +454,10 @@ function MeetingContent() {
 
           {/* Sidebar */}
           {showSidebar && (
-            <aside className="w-80 glass border-l flex flex-col meeting-sidebar animate-slide-in-right">
+            <aside className="w-80 glass border-l flex flex-col meeting-sidebar animate-slide-out animate-slide-in-right">
               <div className="p-4 border-b">
                 <div className="flex space-x-1">
+
                   <Button
                     variant={activeTab === "emotions" ? "secondary" : "ghost"}
                     size="sm"
@@ -359,10 +485,14 @@ function MeetingContent() {
                     <MessageSquare className="w-4 h-4 mr-1" />
                     Participants
                   </Button>
+                  <Button variant="ghost" size="sm" onClick={() => (setShowSidebar(!showSidebar))} className="">
+                    <MoreVertical className="w-4 h-4" />
+                  </Button>
                 </div>
               </div>
 
               <div className="flex-1 overflow-y-auto">
+
                 {activeTab === "emotions" && <EmotionFeed participants={participants} />}
                 {activeTab === "chat" && <ChatPanel />}
                 {activeTab === "participants" && <ParticipantsList participants={participantsList} />}
@@ -372,10 +502,10 @@ function MeetingContent() {
         </div>
 
         {/* Control Bar */}
-        <div className="glass backdrop-blur-sm border-t px-6 py-4 animate-slide-in-up z-20">
-          <div className="flex items-center justify-center space-x-6">
+        <div className="glass  backdrop-blur-sm border-t px-6  animate-slide-in-up ">
+          <div className="flex control-bar items-center justify-center gap-8">
             {/* Primary Controls */}
-            <div className="flex items-center space-x-4">
+            <div className="controlbar-firstdiv flex items-center space-x-4">
               <Button
                 variant={isMuted ? "destructive" : "secondary"}
 
@@ -389,7 +519,7 @@ function MeetingContent() {
                     duration: 2000,
                   })
                 }}
-                className="rounded-full w-14 h-14 glow2 ripple"
+                className="controlbar-firstdiv-button rounded-full w-14 h-14 glow2 ripple"
               >
                 {isMuted ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
               </Button>
@@ -407,12 +537,12 @@ function MeetingContent() {
                     duration: 2000,
                   })
                 }}
-                className="rounded-full w-14 h-14 glow2 ripple"
+                className="controlbar-firstdiv-button rounded-full w-14 h-14 glow2 ripple"
               >
                 {isVideoOn ? <Video className="w-6 h-6" /> : <VideoOff className="w-6 h-6" />}
               </Button>
 
-              <Button variant="secondary" className="rounded-full w-14 h-14 glass glow2 ripple" onClick={shareScreen}>
+              <Button variant="secondary" className="controlbar-firstdiv-button rounded-full w-14 h-14 glass glow2 ripple" onClick={shareScreen}>
                 <Monitor className="w-6 h-6 " />
 
               </Button>
@@ -421,7 +551,7 @@ function MeetingContent() {
             <Separator orientation="vertical" className="h-10" />
 
             {/* Feature Controls */}
-            <div className="flex items-center space-x-3 ">
+            <div className="flex controlbar-middle-div items-center  ">
               <Button
                 variant={isEmotionDetectionOn ? "default" : "outline"}
                 size="sm"
@@ -434,10 +564,10 @@ function MeetingContent() {
                     duration: 3000,
                   })
                 }}
-                className="glass glow ripple"
+                className="controlbar-middlediv-button glass glow ripple"
               >
                 <Smile className="w-4 h-4 mr-2" />
-                Emotions
+                <p>Emotions</p>
               </Button>
 
               <Button
@@ -452,10 +582,10 @@ function MeetingContent() {
                     duration: 2000,
                   })
                 }}
-                className="glass glow ripple"
+                className="controlbar-middlediv-button glass glow ripple"
               >
                 <Sparkles className="w-4 h-4 mr-2" />
-                Overlay
+                <p>Overlay</p>
               </Button>
 
               <Button
@@ -470,20 +600,20 @@ function MeetingContent() {
                     duration: 3000,
                   })
                 }}
-                className="glass glow ripple"
+                className="controlbar-middlediv-button glass glow ripple"
               >
                 <Zap className="w-4 h-4 mr-2" />
-                Face Swap
+                <p>Face Swap</p>
               </Button>
 
               <Button
                 variant={isRecording ? "destructive" : "outline"}
                 size="sm"
                 onClick={toggleRecording}
-                className="glass glow ripple"
+                className="controlbar-middlediv-button glass glow ripple"
               >
-                <Record className="w-4 h-4 mr-2" />
-                {isRecording ? "Stop" : "Record"}
+                <Record className=" w-4 h-4 mr-2" />
+                <p>{isRecording ? "Stop" : "Record"}</p>
               </Button>
             </div>
 
@@ -494,7 +624,7 @@ function MeetingContent() {
               variant="destructive"
 
               onClick={handleLeaveMeeting}
-              className="rounded-full w-14 h-14 glow2 ripple hover:scale-110 transition-transform"
+              className="rounded-full end-call w-14 h-14 glow2 ripple hover:scale-110 transition-transform"
             >
               <PhoneOff className="w-6 h-6" />
             </Button>
