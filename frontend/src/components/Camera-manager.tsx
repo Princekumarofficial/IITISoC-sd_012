@@ -332,10 +332,46 @@ export function CameraManager({ onStreamReady, className }: CameraManagerProps) 
   return (
     <Card className={`video-container overflow-hidden ${className}`}>
       <div className="overflow-hidden relative">
+        {!stream && devices.cameras.length > 0 && (
+          <div className="absolute top-4 Camera-Options left-4 right-4 space-y-2">
+            <div className="flex items-center   space-x-2">
+              <Select value={selectedCamera} onValueChange={setSelectedCamera}>
+                <SelectTrigger className="glass text-xs  text-balance overflow-hidden ">
+                  <SelectValue placeholder="Select Camera" />
+                </SelectTrigger>
+                <SelectContent>
+                  {devices.cameras.map((camera) => (
+                    <SelectItem key={camera.deviceId} value={camera.deviceId}>
+                      {camera.label || `Camera ${camera.deviceId.slice(0, 8)}`}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button size="sm" variant="outline" onClick={refreshDevices} className="glass">
+                <RefreshCw className="w-4 h-4" />
+              </Button>
+            </div>
+
+            {devices.microphones.length > 0 && (
+              <Select value={selectedMicrophone} onValueChange={setSelectedMicrophone}>
+                <SelectTrigger className="glass text-xs">
+                  <SelectValue placeholder="Select Microphone" />
+                </SelectTrigger>
+                <SelectContent>
+                  {devices.microphones.map((mic) => (
+                    <SelectItem key={mic.deviceId} value={mic.deviceId}>
+                      {mic.label || `Microphone ${mic.deviceId.slice(0, 8)}`}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
+        )}
         {stream && isVideoEnabled ? (
           <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover rounded-lg overflow-hidden" />
         ) : (
-          <div className="aspect-video bg-gradient-to-br from-primary/20 to-blue-600/20 flex items-center justify-center rounded-lg">
+          <div className="aspect-video bg-gradient-to-br from-primary/20 to-blue-600/20 flex items-end pb-8 justify-center rounded-lg">
             {isLoading ? (
               <div className="text-center space-y-4">
                 <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
@@ -360,7 +396,7 @@ export function CameraManager({ onStreamReady, className }: CameraManagerProps) 
                 </div>
               </div>
             ) : !stream && devices.cameras.length > 0 && (
-              <div className="text-center space-y-4">
+              <div className="text-center start space-y-4">
                 {/* <Camera className="w-12 h-12 text-muted-foreground" /> */}
                 <div>
                   <p className="text-sm font-medium">Camera Ready</p>
@@ -418,42 +454,7 @@ export function CameraManager({ onStreamReady, className }: CameraManagerProps) 
         )}
 
         {/* Device selection */}
-        {!stream && devices.cameras.length > 0 && (
-          <div className="absolute top-4 left-4 right-4 space-y-2">
-            <div className="flex items-center space-x-2">
-              <Select value={selectedCamera} onValueChange={setSelectedCamera}>
-                <SelectTrigger className="glass text-xs">
-                  <SelectValue placeholder="Select Camera" />
-                </SelectTrigger>
-                <SelectContent>
-                  {devices.cameras.map((camera) => (
-                    <SelectItem key={camera.deviceId} value={camera.deviceId}>
-                      {camera.label || `Camera ${camera.deviceId.slice(0, 8)}`}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Button size="sm" variant="outline" onClick={refreshDevices} className="glass">
-                <RefreshCw className="w-4 h-4" />
-              </Button>
-            </div>
-
-            {devices.microphones.length > 0 && (
-              <Select value={selectedMicrophone} onValueChange={setSelectedMicrophone}>
-                <SelectTrigger className="glass text-xs">
-                  <SelectValue placeholder="Select Microphone" />
-                </SelectTrigger>
-                <SelectContent>
-                  {devices.microphones.map((mic) => (
-                    <SelectItem key={mic.deviceId} value={mic.deviceId}>
-                      {mic.label || `Microphone ${mic.deviceId.slice(0, 8)}`}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          </div>
-        )}
+        
       </div>
     </Card>
   )

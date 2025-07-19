@@ -503,11 +503,55 @@ top: 40px;
   top: 0;
   background-color: #f8f5fe;
 }
-
+.prejoin-inputs{
+    display: flex;
+    flex-direction: column ;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+  }
+.prejoin-main{
+    margin: 0;
+  }
+  .Camera-Options{
+  scale: 65%;
+  top: 0;
+  margin: 0;
+  padding: 0;
+ position: absolute;
+ left: 0;
+ display: flex;
+ flex-direction: column;
+ flex-wrap: wrap;
+margin-right: 70vw;
+}
+.start {
+margin-top: 5rem;
+scale: 80%;
+}
 }
 
 @media screen and (max-width: 823px) and (min-width:440px) {
+  .prejoin-inputs{
+    display: flex;
+    flex-direction: column ;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+  }
+  .prejoin-main{
+    margin: 0;
+  }
   
+.Camera-Options{
+  scale: 75%;
+  top: 0;
+  left: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 490px;
+  position: absolute;
+}
 .controlbar-middlediv-button{
   width: 105px;
  margin: 0;

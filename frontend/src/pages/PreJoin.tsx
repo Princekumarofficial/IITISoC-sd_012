@@ -122,31 +122,31 @@ function PreJoinContent() {
   return (
     <>
       <Navbar />
-      <div className="meeting-container bg-gradient-to-br from-background via-primary/5 to-blue-600/5 flex flex-col relative overflow-hidden my-16">
+      <div className="meeting-container bg-gradient-to-br from-background via-primary/5 to-blue-600/5 flex flex-col relative overflow-hidden">
         <TailCursor />
-        <div className="flex flex-1 overflow-hidden justify-center items-center">
-          <div className="h-[50vh] w-[70vw]">
-            <div className="relative animate-fade-in">
-              <CameraManager onStreamReady={handleStreamReady} className="h-full" />
-            </div>
+        <div className="flex prejoin-main justify-center items-center my-16">
+          <div className=" w-full max-w-[800px] min-w-[300px] aspect-video rounded-lg overflow-hidden">
+            
+              <CameraManager onStreamReady={handleStreamReady} className=" w-full h-full object-cover" />
+            
           </div>
         </div>
 
-        <div className="glass backdrop-blur-sm border-t px-6 py-4 animate-slide-in-up">
-          <div className="flex items-center justify-center space-x-6">
-            <div className="flex items-center space-x-4">
+        <div className="glass backdrop-blur-sm  border-t px-4 py-6 animate-slide-in-up">
+          <div className="flex flex-col md:flex-row md:items-center justify-center gap-4">
+            <div className="flex prejoin-inputs items-center space-x-4">
               {id ? (
                 <>
                   <Input
                     placeholder="Enter the title of the meeting"
                     value={meetingTitle}
                     onChange={(e) => setMeetingTitle(e.target.value)}
-                    className="glass glow ripple"
+                    className="glass glow ripple ml-[16px] w-full md:max-w-xs"
                   />
                   <select
                     value={meetingType}
                     onChange={(e) => setMeetingType(e.target.value)}
-                    className="border rounded-md px-2 py-2 bg-background text-foreground glass glow ripple"
+                    className="border rounded-md px-2 py-2 bg-background text-foreground glass glow ripple w-full md:w-[150px]"
                   >
                     <option value="group">Group</option>
                     <option value="1v1">1v1</option>
@@ -157,13 +157,14 @@ function PreJoinContent() {
                   placeholder="Enter the meeting ID"
                   value={meetingCodeInput}
                   onChange={(e) => setMeetingCodeInput(e.target.value)}
+                  className="w-full md:max-w-sm"
                 />
               )}
               <Button
                 onClick={handleJoinMeeting}
                 variant="outline"
                 size="sm"
-                className="w-full glass glow ripple"
+                className="w-full md:w-auto glass glow ripple"
               >
                 <Users className="w-4 h-4 mr-2" />
                 {id ? "Create Meeting" : "Join Meeting"}
