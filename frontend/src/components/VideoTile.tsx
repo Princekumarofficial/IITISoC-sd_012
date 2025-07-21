@@ -3,7 +3,7 @@ import { useEmotionDetection } from "../hooks/useEmotionDetection";
 import { FaceLandmarks68 } from "@vladmandic/face-api";
 import { getEmojiFromEmotion, getEmotionFromEmoji } from "../utils/getEmoji";
 import { LandmarkSection } from "../hooks/useSFUClient";
-
+import { useMeetingChatStore } from "../store/useMeetingStore";
 export interface VideoTileProps {
   stream: MediaStream | null;
   name: string;
@@ -41,6 +41,8 @@ export const VideoTile: React.FC<VideoTileProps> = ({
   const canvasRef = useRef<HTMLCanvasElement>(null); // ✅ Canvas ref
   const emojiRef = useRef<string>("😐");
   const landmarksRef = useRef<FaceLandmarks68 | LandmarkSection | null>(null);
+  const prevEmojiRef = useRef<string>(""); // Track previous emoji
+
 
 
   // Attach stream
@@ -58,8 +60,20 @@ export const VideoTile: React.FC<VideoTileProps> = ({
     isLocal && enableLocalEmotionDetection,
     (data) => {
       if (onLocalEmotionDetected) onLocalEmotionDetected(data);
+       const newEmoji = data.emotion;
       emojiRef.current = data.emotion;
       landmarksRef.current = data.landmarks;
+
+      if (newEmoji !== prevEmojiRef.current) {
+      prevEmojiRef.current = newEmoji;
+
+      const meetingId = useMeetingChatStore.getState().meeting?.meetingId;
+      if (meetingId) {
+        useMeetingChatStore.getState().addEmotion(meetingId, newEmoji);
+      } else {
+        console.warn("⚠️ meetingId not found in store");
+      }
+    }
     }
   );
 

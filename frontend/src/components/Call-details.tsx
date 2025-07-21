@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/Tabs"
 import { MessageSquare, Phone, UserCheck, UserX, Clock, Video, Download, Share, Star, Users, Smile } from "lucide-react"
 import { format } from "date-fns"
 import { useMeetingChatStore } from "../store/useMeetingStore"
-
+import { getEmojiFromEmotion } from "../utils/getEmoji"
 interface CallDetailsModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -30,23 +30,42 @@ export function CallDetailsModal({ open, onOpenChange, meetingId }: CallDetailsM
 
   if (!meeting) return null
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "attended": return "bg-green-100 text-green-700 border-green-200"
-      case "invited": return "bg-yellow-100 text-yellow-700 border-yellow-200"
-      case "declined": return "bg-red-100 text-red-700 border-red-200"
-      default: return "bg-gray-100 text-gray-700 border-gray-200"
-    }
-  }
 
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "attended": return <UserCheck className="w-3 h-3" />
-      case "invited": return <Clock className="w-3 h-3" />
-      case "declined": return <UserX className="w-3 h-3" />
-      default: return null
-    }
+
+
+
+  const emotionToEmoji = (emotion: string): string => {
+  const map: Record<string, string> = {
+    neutral: "😐",
+    happy: "😄",
+    sad: "😢",
+    angry: "😠",
+    fear: "😨",
+    disgusted: "🤢",
+    surprised: "😲",
   }
+  return map[emotion] || "❓"
+}
+
+  const calculateDuration = (start: string, participants: any[]) => {
+  if (!start || !participants?.length) return "Unknown";
+
+  const leaveTimes = participants
+    .map(p => p.leaveTime)
+    .filter(Boolean)
+    .map(t => new Date(t).getTime());
+
+  if (!leaveTimes.length) return "Unknown";
+
+  const maxLeave = new Date(Math.max(...leaveTimes));
+  const diffMs = maxLeave.getTime() - new Date(start).getTime();
+  const diffMin = Math.floor(diffMs / (1000 * 60));
+  const hours = Math.floor(diffMin / 60);
+  const minutes = diffMin % 60;
+
+  return hours ? `${hours}h ${minutes}min` : `${minutes} min`;
+};
+
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -83,7 +102,9 @@ export function CallDetailsModal({ open, onOpenChange, meetingId }: CallDetailsM
                     </div>
                     <div className="flex justify-between">
                       <span className="text-sm text-muted-foreground">Duration:</span>
-                      <span className="text-sm font-medium">{meeting.duration || "N/A"}</span>
+                      <span className="text-sm font-medium">
+                      {calculateDuration(meeting.startTime, participants)}
+                    </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-sm text-muted-foreground">Type:</span>
@@ -95,20 +116,47 @@ export function CallDetailsModal({ open, onOpenChange, meetingId }: CallDetailsM
                         {meeting.mood || "Neutral"}
                       </Badge>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm text-muted-foreground">Rating:</span>
-                      <div className="flex items-center space-x-1">
-                        {Array.from({ length: 5 }).map((_, i) => (
-                          <Star
-                            key={i}
-                            className={`w-4 h-4 ${i < Math.floor(meeting.overallRating || 0) ? "text-yellow-500 fill-current" : "text-gray-300"}`}
-                          />
-                        ))}
-                        <span className="text-sm font-medium ml-1">{meeting.overallRating || 0}</span>
-                      </div>
-                    </div>
+                    
                   </CardContent>
                 </Card>
+                
+                <Card className="glass">
+  <CardHeader>
+    <CardTitle className="flex items-center text-lg">
+      <Smile className="w-5 h-5 mr-2" /> Emotion Analytics
+    </CardTitle>
+  </CardHeader>
+  <CardContent className="space-y-3">
+    <div className="text-sm text-muted-foreground">
+      Total Emotions Detected:{" "}
+      <span className="font-semibold">{meeting.emotionAnalytics.totalEmotions}</span>
+    </div>
+
+    {meeting.emotionAnalytics.topEmotions.map((emotion, index) => {
+      const percentage = ((emotion.count / meeting.emotionAnalytics.totalEmotions) * 100).toFixed(1)
+
+      return (
+        <div key={index} className="flex items-center space-x-3">
+          <span className="text-2xl">{getEmojiFromEmotion(emotion.emoji)}</span>
+          <div className="flex-1">
+            <div className="flex justify-between text-sm mb-1">
+              <span className="capitalize">{emotion.emoji} ({emotion.count}x)</span>
+              <span>{percentage}%</span>
+            </div>
+            <div className="w-full bg-muted rounded-full h-2">
+              <div
+                className="bg-primary h-2 rounded-full transition-all"
+                style={{ width: `${percentage}%` }}
+              />
+            </div>
+          </div>
+        </div>
+      )
+    })}
+  </CardContent>
+</Card>
+
+
               </div>
             </TabsContent>
 
@@ -130,15 +178,22 @@ export function CallDetailsModal({ open, onOpenChange, meetingId }: CallDetailsM
                             <AvatarImage src={p.avatar || "/profile.jpg"} />
                             <AvatarFallback>{p.name?.split(" ").map((n) => n[0]).join("")}</AvatarFallback>
                           </Avatar>
-                          <div className="flex-1">
-                            <div className="flex items-center space-x-2 mb-1">
-                              <h4 className="font-medium">{p.name}</h4>
-                              <Badge variant="outline" className={getStatusColor(p.status)}>
-                                {getStatusIcon(p.status)}
-                                <span className="ml-1 capitalize">{p.status}</span>
-                              </Badge>
-                            </div>
-                          </div>
+                          <div className="flex-1 space-y-1">
+  <div className="flex items-center space-x-2">
+    <h4 className="font-medium">{p.name}</h4>
+    
+  </div>
+  <div className="text-xs text-muted-foreground">
+    Joined: {p.joinTime ? format(new Date(p.joinTime), "HH:mm") : "N/A"} | Left: {p.leaveTime ? format(new Date(p.leaveTime), "HH:mm") : "N/A"}
+  </div>
+  {p.emotions?.length > 0 && (
+  <div className="flex items-center gap-1 text-sm text-muted-foreground">
+    <Smile className="w-4 h-4" />
+    <span>{p.emotions.map(emotionToEmoji).join(" ")}</span>
+  </div>
+)}
+</div>
+
                         </div>
                       ))}
                     </div>

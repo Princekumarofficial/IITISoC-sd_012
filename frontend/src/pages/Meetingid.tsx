@@ -40,7 +40,7 @@ import { getEmojiFromEmotion } from "../utils/getEmoji";
 import { useParams } from "react-router-dom";
 import type { FaceLandmarks68 } from "@vladmandic/face-api";
 import { ParticipantsList } from "../components/Participants";
-import { useMeetingChatStore } from "../store/useMeetingStore";
+import { useMeetingChatStore  } from "../store/useMeetingStore";
 
 
 import type { LandmarkSection } from "../hooks/useSFUClient";
@@ -52,6 +52,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/Avatar";
 import { signOut } from "firebase/auth";
 import { auth } from "../service/firebase";
+
+
 function MeetingContent() {
   //pull data from meetingstore
   const {
@@ -60,8 +62,10 @@ function MeetingContent() {
     fetchMeetingById,
     subscribeToMeetingMessages,
     unsubscribeFromMeetingMessages,
+    addleaveTime,
+    addEmotion,
   } = useMeetingChatStore()
-
+  
 
 
 
@@ -163,7 +167,7 @@ function MeetingContent() {
     });
   };
 
-  const handleLeaveMeeting = () => {
+  const handleLeaveMeeting = async() => {
     const stream = useMediaStore.getState().stream;
     if (stream) {
       stream.getTracks().forEach(track => track.stop());
@@ -175,6 +179,15 @@ function MeetingContent() {
       message: "Thanks for joining! Meeting summary will be sent to your email.",
     })
     stopMediaTracks(localStream)
+
+     try {
+        await addleaveTime(meeting.meetingId);
+        
+      } catch (error) {
+        console.error(error);
+        
+      }
+    
     setTimeout(() => {
       navigate("/dashboard")
     }, 1000)

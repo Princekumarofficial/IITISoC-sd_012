@@ -21,12 +21,12 @@ import API from "../service/api";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 dayjs.extend(relativeTime);
-
+import { getEmojiFromEmotion } from "../utils/getEmoji";
 
 function DashboardContent() {
   const { authUser } = useAuthStore();
   const [activeTab, setActiveTab] = useState("history")
-  const [showSettings, setShowSettings] = useState(false)
+
   const [showProfile, setShowProfile] = useState(false)
   const [showCameraTest, setShowCameraTest] = useState(false)
   const [showCallDetails, setShowCallDetails] = useState(false)
@@ -38,42 +38,63 @@ function DashboardContent() {
 
 
 useEffect(() => {
-    const fetchMeetings = async () => {
-      try {
-        const res = await API.getMeetingsForUser();
-        const meetings = res.data;
-        const mapped = meetings.map((m: any) => ({
+  const fetchMeetings = async () => {
+    try {
+      const res = await API.getMeetingsForUser();
+      const meetings = res.data;
+      
+      const mapped = meetings.map((m: any) => {
+        const duration = getDuration(m.startTime, m.participants);
+        const topEmotions = m.emotionAnalytics?.topEmotions || [];
+        const emotionEmojis = topEmotions.map((e: any) => getEmojiFromEmotion(e.emoji));
+        return {
           id: m._id,
           title: m.title,
           participants: m.participants.map((p: any) => p.name),
-          duration: getDuration(m.startTime, m.endTime || m.emotionAnalytics?.updatedAt),
+          duration,
           time: dayjs(m.endTime || m.emotionAnalytics?.updatedAt || m.startTime).fromNow(),
           type: m.type,
+          emotions: emotionEmojis,  // 🟢 important
+    mood: getMood(m),         // optional: use analytics to calculate mood
           raw: m
-        }));
-        setAllCalls(mapped);
-      } catch (err) {
-        console.error("Error fetching meetings", err);
-      }
+        };
+      });
+
+      setAllCalls(mapped);
+    } catch (err) {
+      console.error("Error fetching meetings", err);
     }
-    fetchMeetings();
-  }, []);
+  };
+
+  fetchMeetings();
+}, []);
 
 
-  const getDuration = (start: string, end: string) => {
-    if (!start || !end) return "Unknown";
-    const diffMin = dayjs(end).diff(dayjs(start), 'minute');
-    const hours = Math.floor(diffMin / 60);
-    const minutes = diffMin % 60;
-    return hours > 0 ? `${hours}h ${minutes}min` : `${minutes} min`;
-  }
 
 
-  const getTopEmojis = (meeting: any) => {
-    // Tumhare meeting.emotionAnalytics ya meeting.participants se top emojis nikal sakte ho
-    // Abhi demo ke liye fix return kar rahe hain
-    return ["😊", "👍", "🎉"];
-  }
+
+const getDuration = (start: string, participants: any[]) => {
+  if (!start || !participants || participants.length === 0) return "Unknown";
+
+  const validLeaveTimes = participants
+    .map(p => p.leaveTime)
+    .filter(t => t !== null && t !== undefined)
+    .map(t => dayjs(t));
+
+  if (validLeaveTimes.length === 0) return "Unknown";
+
+  // Find max manually
+  const latest = validLeaveTimes.reduce((a, b) => (a.isAfter(b) ? a : b));
+  const diffMin = latest.diff(dayjs(start), 'minute');
+  const hours = Math.floor(diffMin / 60);
+  const minutes = diffMin % 60;
+
+  return hours > 0 ? `${hours}h ${minutes}min` : `${minutes} min`;
+};
+
+
+
+
 
   const getMood = (meeting: any) => {
     // Tumhare meeting.emotionAnalytics se mood calculate kar sakte ho
@@ -157,14 +178,7 @@ useEffect(() => {
                       <User className="w-4 h-4 mr-2" />
                       Profile
                     </Button>
-                    <Button
-                      variant="ghost"
-                      className="w-full justify-start ripple"
-                      onClick={() => setShowSettings(true)}
-                    >
-                      <Settings className="w-4 h-4 mr-2" />
-                      Settings
-                    </Button>
+                    
                     <Button
                       variant="ghost"
                       className="w-full justify-start ripple"
@@ -342,14 +356,14 @@ useEffect(() => {
                                   <span className="text-sm text-muted-foreground">Top emotions:</span>
                                 </div>
                                 <div className="flex space-x-1">
-                                  {/* {call.emotions.map((emoji, index) => (
+                                  {call.emotions.map((emoji, index) => (
                                     <span
                                       key={index}
                                       className="text-xl hover:scale-125 transition-transform cursor-pointer"
                                     >
                                       {emoji}
                                     </span>
-                                  ))} */}
+                                  ))}
                                 </div>
                               </div>
                             </div>
@@ -376,7 +390,7 @@ useEffect(() => {
 
       <Footer />
 
-      <SettingsModal open={showSettings} onOpenChange={setShowSettings} />
+    
       <ProfileModal open={showProfile} onOpenChange={setShowProfile} />
       <CallDetailsModal
         open={showCallDetails}

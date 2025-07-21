@@ -57,6 +57,14 @@ export const useMeetingChatStore = create((set, get) => ({
       console.error("Error in addParticipant:", error);
     }
   },
+   addleaveTime: async (meetingId) => {
+    try {
+      const res = await API.addleaveTime(meetingId);
+      
+    } catch (error) {
+      console.error("Error in addleaveTime:", error);
+    }
+  },
 
   // ✅ Send chat message
   sendMeetingMessage: async (meetingId, message) => {
@@ -76,7 +84,7 @@ export const useMeetingChatStore = create((set, get) => ({
   // ✅ Add emotion
   addEmotion: async (meetingId, emoji) => {
     try {
-      const res = await API.addEmotion(meetingId, emoji);
+      const res = await API.addEmotion({meetingId, emoji});
       set((state) => ({
         meeting: {
           ...state.meeting,

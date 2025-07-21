@@ -5,7 +5,7 @@ const participantSchema = new mongoose.Schema({
   name: String,
   avatar: String,
   joinTime: Date,
-  // leaveTime : Date,
+  leaveTime : Date,
   emotions: [String],
 });
 
@@ -15,10 +15,7 @@ const chatMessageSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now },
 });
 
-const topEmotionSchema = new mongoose.Schema({
-  emoji: String,
-  count: Number,
-});
+
 
 const MeetingCallSchema = new mongoose.Schema({
   meetingId:String ,
@@ -32,11 +29,16 @@ const MeetingCallSchema = new mongoose.Schema({
 
   participants: [participantSchema],
   chatMessages: [chatMessageSchema],
-
-  emotionAnalytics: {
-    totalEmotions: Number,
-    topEmotions: [topEmotionSchema],
+    emotionAnalytics: {
+    totalEmotions: { type: Number, default: 0 },
+    topEmotions: [
+      {
+        emoji: String,
+        count: Number
+      }
+    ]
   },
+
 }, { timestamps: true });
 
 const MeetingCall  =  mongoose.model("MeetingCall", MeetingCallSchema);

@@ -55,13 +55,14 @@ export const SERVICE_URLS = {
 
   // Add participant
   addParticipant: (id) => ({ url: `/meeting/add-participant/${id}`, method: 'PUT' }),
+    addleaveTime: (id) => ({ url: `/meeting/add-leaveTime/${id}`, method: 'PUT' }),
 
   // Add chat message
   addMessage: ({meetingId , message}) => ({ url: `/meeting/add-message/${meetingId}`, method: 'PUT' ,
   data : {message}}),
 
   // Add emotion
-  addEmotion: (id) => ({ url: `/meeting/add-emotion/${id}`, method: 'PUT' }),
+  addEmotion: ({meetingId , emoji}) => ({ url: `/meeting/add-emotion/${meetingId}`, method: 'PUT' ,  data : {emoji} }),
   
   getMeetingsForUser: {url : "/usermeetings" , method : 'GET'} ,
 }; 

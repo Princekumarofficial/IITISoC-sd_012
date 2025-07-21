@@ -89,6 +89,42 @@ export const addParticipant = async (req, res) => {
   }
 };
 
+
+// add leave time of participant 
+// Add leave time of participant 
+export const addleaveTime = async (req, res) => {
+  try {
+    const meetingId = req.params.id;
+    const userId = req.user._id;
+
+    const meeting = await MeetingCall.findOne({ meetingId });
+
+    if (!meeting) return res.status(404).json({ message: "Meeting not found" });
+
+    const participant = meeting.participants.find(
+      p => p.userId.toString() === userId.toString()
+    );
+
+    if (!participant) {
+      return res.status(404).json({ message: "Participant not found in this meeting" });
+    }
+
+    // ✅ Set leaveTime
+    participant.leaveTime = new Date();
+
+    // ✅ Save the meeting
+    await meeting.save();
+
+    res.json({ message: "Leave time updated", leaveTime: participant.leaveTime });
+
+  } catch (error) {
+    console.error("Error adding leave time:", error);
+    res.status(500).json({ message: "Server error adding leave time" });
+  }
+};
+
+
+
 // Add chat message to meeting
 export const addMessage = async (req, res) => {
   try {
@@ -123,7 +159,7 @@ export const addEmotion = async (req, res) => {
     const { emoji } = req.body;
     const userId = req.user._id;  
 
-     const meeting = await MeetingCall.findById(meetingId);
+     const meeting = await MeetingCall.findOne({ meetingId });
     if (!meeting) return res.status(404).json({ message: "Meeting not found" });
    
         // Find participant & add emotion

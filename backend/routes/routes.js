@@ -8,7 +8,7 @@ import upload from '../middleware/upload.js';
 import { getUsersForSidebar ,saveuser } from '../controllers/ChatList.controller.js';
 import { getMessages , sendMessage  , } from '../controllers/Chat.controller.js';
 const router = express.Router();
-import { addParticipant , addEmotion , addMessage , createMeeting , getMeetingById , getMeetingsForUser } from '../controllers/MeetingCall.controller.js';
+import { addParticipant , addEmotion , addMessage , createMeeting , getMeetingById , getMeetingsForUser ,addleaveTime} from '../controllers/MeetingCall.controller.js';
 
 // routes for signin
 router.post('/google-auth' , authGoogle);
@@ -40,6 +40,8 @@ router.get("/getmeetings/:id",protectRoute , getMeetingById);
 
 
 router.put("/meeting/add-participant/:id", protectRoute ,addParticipant);
+router.put("/meeting/add-leaveTime/:id", protectRoute ,addleaveTime);
+
 router.put("/meeting/add-message/:id", protectRoute, addMessage);
 router.put("/meeting/add-emotion/:id",protectRoute, addEmotion);
 router.get("/usermeetings" , protectRoute , getMeetingsForUser);
