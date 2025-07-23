@@ -1,5 +1,5 @@
-import React from "react"
-import { useNavigate } from "react-router-dom"
+import React, { useEffect, useState } from "react"
+import { useLocation, useNavigate } from "react-router-dom"
 import {
   Video,
   Heart,
@@ -78,23 +78,66 @@ const team = [
     avatar: "/profile.jpg",
     bio: "2nd year MEMS student at IIT Indore",
   },
-  // {
-  //   name: "David Kim",
-  //   role: "Lead Product Designer",
-  //   avatar: "/profile.jpg",
-  //   bio: "Award-winning UX designer with experience at Apple and Microsoft, focused on accessible design.",
-  // },
+  
 ]
+const teamContacts = {
+  mail: [
+    { name: "Mr. Abhay Lodhi", value: "abhaylodhi128135@gmail.com" },
+    { name: "Mr. Pratyush Gupta", value: "pratyush1534@gmail.com" },
+    { name: "Mr. Hemant Yadav", value: "412006hemantyadav@gmail.com" },
+  ],
+  twitter: [
+    { name: "Mr. Abhay Lodhi", value: "@AbhayLodhi014" },
+    { name: "Mr. Pratyush Gupta", value: "@Pratyush_131" },
+    { name: "Mr. Hemant Yadav", value: "@_hemant2435" },
+  ],
+  linkedin: [
+    { name: "Mr. Abhay Lodhi", value: "linkedin.com/in/abhay-lodhi-a5a21231a" },
+    { name: "Mr. Pratyush Gupta", value: "linkedin.com/in/pratyush-gupta-ba4102331" },
+    { name: "Mr. Hemant Yadav", value: "linkedin.com/in/hemant-yadav-a86497327" },
+  ],
+  github: [
+    { name: "Mr. Abhay Lodhi", value: "github.com/abhaylodhi014" },
+    { name: "Mr. Pratyush Gupta", value: "github.com/PratyushG434" },
+    { name: "Mr. Hemant Yadav", value: "github.com/hemant4106" },
+  ],
+}
 
-const stats = [
-  { number: "1M+", label: "Active Users" },
-  { number: "50M+", label: "Video Calls" },
-  { number: "99.9%", label: "Uptime" },
-  { number: "150+", label: "Countries" },
-]
+
 
 function AboutContent() {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
+  const [activeContact, setActiveContact] = useState("mail");
+ const location = useLocation()
+
+useEffect(() => {
+  setTimeout(() => {
+    const id = window.location.hash.replace("#", "")
+    if (id) {
+      const el = document.getElementById(id)
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth" })
+      }
+    }
+  }, 100)
+}, [])
+
+
+ useEffect(() => {
+  const id = location.hash.replace("#", "")
+  if (id) {
+    const el = document.getElementById(id)
+    if (el) {
+      const rect = el.getBoundingClientRect()
+      const offset = window.scrollY + rect.top - (window.innerHeight / 2) + (rect.height / 2)
+      window.scrollTo({
+        top: offset,
+        behavior: "smooth"
+      })
+    }
+  }
+}, [location])
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-primary/5 to-blue-600/5 relative">
@@ -102,8 +145,9 @@ function AboutContent() {
 
 
       {/* Header */}
+      <section id="top">
       <header className="glass border-b backdrop-blur-sm sticky top-0 z-40">
-        <div className="container mx-auto px-4 py-4">
+        <div  className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="glass glow ripple">
@@ -125,6 +169,7 @@ function AboutContent() {
           </div>
         </div>
       </header>
+      </section>
 
       {/* Body Sections */}
       <div className="container mx-auto px-4 py-12 space-y-16">
@@ -139,14 +184,7 @@ function AboutContent() {
               MediCall combines cutting-edge AI technology with seamless video calling to create the most emotionally intelligent communication platform ever built.
             </p>
           </div>
-          <div className="flex items-center justify-center space-x-8">
-            {stats.map((stat, index) => (
-              <div key={index} className="text-center animate-scale-in" style={{ animationDelay: `${index * 0.1}s` }}>
-                <div className="text-3xl font-bold text-primary">{stat.number}</div>
-                <div className="text-sm text-muted-foreground">{stat.label}</div>
-              </div>
-            ))}
-          </div>
+          
         </section>
 
         {/* Mission */}
@@ -181,8 +219,8 @@ function AboutContent() {
         </section>
 
         {/* Features */}
-        <section className="space-y-8 animate-slide-in-right">
-          <div className="text-center space-y-4">
+        <section id="features"  className="space-y-8 animate-slide-in-right">
+          <div  className="text-center space-y-4">
             <h2 className="text-3xl font-bold">Powerful Features</h2>
             <p className="text-lg text-muted-foreground">Discover what makes MediCall the future of video communication</p>
           </div>
@@ -204,63 +242,91 @@ function AboutContent() {
         </section>
 
         {/* Team */}
-        <section className="space-y-8 animate-fade-in">
-          <div className="text-center space-y-4">
-            <h2 className="text-3xl font-bold">Meet Our Team</h2>
-            <p className="text-lg text-muted-foreground">The brilliant minds behind MediCall's revolutionary technology</p>
+     <section id="contact" className="space-y-8 animate-slide-in-left">
+      <div className="text-center space-y-4">
+        <h2 className="text-3xl font-bold">Get In Touch</h2>
+        <p className="text-lg text-muted-foreground">
+          Have questions or want to learn more? We'd love to hear from you!
+        </p>
+      </div>
+      <Card className="glass glow max-w-2xl mx-auto">
+        <CardContent className="p-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <Button
+              variant="outline"
+              className="glass glow ripple h-16 flex-col"
+              onClick={() => setActiveContact("mail")}
+            >
+              <Mail className="w-6 h-6 mb-2" />
+              <span className="text-xs">Mail</span>
+            </Button>
+            <Button
+              variant="outline"
+              className="glass glow ripple h-16 flex-col"
+              onClick={() => setActiveContact("twitter")}
+            >
+              <Twitter className="w-6 h-6 mb-2" />
+              <span className="text-xs">Twitter</span>
+            </Button>
+            <Button
+              variant="outline"
+              className="glass glow ripple h-16 flex-col"
+              onClick={() => setActiveContact("linkedin")}
+            >
+              <Linkedin className="w-6 h-6 mb-2" />
+              <span className="text-xs">LinkedIn</span>
+            </Button>
+            <Button
+              variant="outline"
+              className="glass glow ripple h-16 flex-col"
+              onClick={() => setActiveContact("github")}
+            >
+              <Github className="w-6 h-6 mb-2" />
+              <span className="text-xs">GitHub</span>
+            </Button>
           </div>
-          <div className="flex flex-wrap justify-center gap-10">
-            {team.map((member, index) => (
-              <Card
-                key={index}
-                className="glass glow text-center hover:scale-105 transition-transform animate-slide-in-up"
-                style={{
-                  animationDelay: `${index * 0.1}s`,
-                  width: "260px", // consistent card width
-                }}
-              >
-                <CardHeader>
-                  <Avatar className="w-24 h-24 mx-auto mb-4">
-                    <AvatarImage src={member.avatar} />
-                    <AvatarFallback className="text-2xl bg-gradient-to-br from-primary to-blue-600 text-white">
-                      {member.name.split(" ").map((n) => n[0]).join("")}
-                    </AvatarFallback>
-                  </Avatar>
-                  <CardTitle className="text-lg">{member.name}</CardTitle>
-                  <Badge variant="secondary">{member.role}</Badge>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground">{member.bio}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </section>
 
-        {/* Contact */}
-        <section className="space-y-8 animate-slide-in-left">
-          <div className="text-center space-y-4">
-            <h2 className="text-3xl font-bold">Get In Touch</h2>
-            <p className="text-lg text-muted-foreground">Have questions or want to learn more? We'd love to hear from you!</p>
+          <div className="mt-8 text-center space-y-2">
+            {["mail", "twitter", "linkedin", "github"].includes(activeContact) &&
+              teamContacts[activeContact].map((m, i) => (
+                <p key={i} className="text-sm text-muted-foreground">
+                  <strong>{m.name}:</strong>{" "}
+                  <a
+                    href={
+                      activeContact === "mail"
+                        ? `mailto:${m.value}`
+                        : activeContact === "github"
+                        ? `https://${m.value}`
+                        : activeContact === "linkedin"
+                        ? `https://${m.value}`
+                        : `https://twitter.com/${m.value.replace("@", "")}`
+                    }
+                    className="underline hover:text-primary"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {m.value}
+                  </a>
+                </p>
+              ))}
+
+            {activeContact === "default" && (
+              <>
+                <p className="text-sm text-muted-foreground">
+                  <strong>Email:</strong> hello@medicall.com
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  <strong>Phone:</strong> +1 (555) 123-4567
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  <strong>Address:</strong> 123 Innovation Drive, San Francisco, CA 94105
+                </p>
+              </>
+            )}
           </div>
-          <Card className="glass glow max-w-2xl mx-auto">
-            <CardContent className="p-8">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {[Mail, Twitter, Linkedin, Github].map((Icon, i) => (
-                  <Button key={i} variant="outline" className="glass glow ripple h-16 flex-col">
-                    <Icon className="w-6 h-6 mb-2" />
-                    <span className="text-xs">{Icon.displayName || Icon.name}</span>
-                  </Button>
-                ))}
-              </div>
-              <div className="mt-8 text-center space-y-2">
-                <p className="text-sm text-muted-foreground"><strong>Email:</strong> hello@medicall.com</p>
-                <p className="text-sm text-muted-foreground"><strong>Phone:</strong> +1 (555) 123-4567</p>
-                <p className="text-sm text-muted-foreground"><strong>Address:</strong> 123 Innovation Drive, San Francisco, CA 94105</p>
-              </div>
-            </CardContent>
-          </Card>
-        </section>
+        </CardContent>
+      </Card>
+    </section>
       </div>
     </div>
   )

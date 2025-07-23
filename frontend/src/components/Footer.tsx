@@ -23,46 +23,34 @@ export function Footer() {
 
   const footerLinks = {
     product: [
-      { label: "Features", href: "/features" },
-      { label: "Pricing", href: "/pricing" },
-      { label: "API", href: "/api" },
-      { label: "Integrations", href: "/integrations" },
+      { label: "Features", href: "/about#features" },
+       { label: "About Us", href: "/about#top" },
+       { label: "Contact", href: "/about#contact" },
     ],
-    company: [
-      { label: "About Us", href: "/about" },
-      { label: "Careers", href: "/careers" },
-      { label: "Blog", href: "/blog" },
-      { label: "Press", href: "/press" },
+    
+    legal: [
+      { label: "Privacy Policy", href: "/legal#privacy" },
+      { label: "Terms of Service", href: "/legal#terms" },
+      { label: "Cookie Policy", href: "/legal#cookies" },
     ],
     support: [
       { label: "Help Center", href: "/help" },
-      { label: "Contact", href: "/contact" },
-      { label: "Status", href: "/status" },
-      { label: "Community", href: "/community" },
-    ],
-    legal: [
-      { label: "Privacy Policy", href: "/privacy" },
-      { label: "Terms of Service", href: "/terms" },
-      { label: "Cookie Policy", href: "/cookies" },
-      { label: "GDPR", href: "/gdpr" },
+     
+    
     ],
   }
 
-  const socialLinks = [
-    { icon: <Twitter className="w-5 h-5" />, href: "https://twitter.com/medicall", label: "Twitter" },
-    { icon: <Github className="w-5 h-5" />, href: "https://github.com/medicall", label: "GitHub" },
-    { icon: <Linkedin className="w-5 h-5" />, href: "https://linkedin.com/company/medicall", label: "LinkedIn" },
-    { icon: <Mail className="w-5 h-5" />, href: "mailto:hello@medicall.com", label: "Email" },
-  ]
+  
 
   const features = [
     { icon: <Zap className="w-4 h-4" />, text: "Real-time Emotions" },
-    { icon: <Shield className="w-4 h-4" />, text: "End-to-End Encrypted" },
-    { icon: <Globe className="w-4 h-4" />, text: "Global Availability" },
+    { icon: <Shield className="w-4 h-4" />, text: "End-to-End Encrypted" }
   ]
 
   return (
+    
     <footer className="bg-gradient-to-t from-muted/50 to-background border-t glass">
+       <Separator className="mb-6" />
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-8 mb-8">
           {/* Brand Section */}
@@ -92,21 +80,7 @@ export function Footer() {
               ))}
             </div>
 
-            {/* Social Links */}
-            <div className="flex items-center space-x-2">
-              {socialLinks.map((social, index) => (
-                <Button
-                  key={index}
-                  variant="ghost"
-                  size="icon"
-                  className="glass glow ripple hover:scale-110 transition-transform"
-                  onClick={() => window.open(social.href, "_blank")}
-                  title={social.label}
-                >
-                  {social.icon}
-                </Button>
-              ))}
-            </div>
+          
           </div>
 
           {/* Footer Links */}
@@ -132,47 +106,23 @@ export function Footer() {
         </div>
 
         {/* Contact Info */}
-        <div className="bg-muted/30 rounded-lg p-6 mb-8 glass">
-          <h4 className="font-semibold mb-4 flex items-center">
-            <Phone className="w-4 h-4 mr-2" />
+        <div onClick={()=>(navigate("/about"))} className="bg-muted/30 rounded-lg p-6 mb-8 glass">
+          <h4 className="font-semibold mb-4 bg-[#925ef0] w-fit p-2 rounded-md flex items-center">
+            <Phone  className="w-4 h-4 mr-2" />
             Get in Touch
           </h4>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-muted-foreground">
-            <div className="flex items-center space-x-2">
-              <Mail className="w-4 h-4 text-primary" />
-              <span>hello@medicall.com</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Phone className="w-4 h-4 text-primary" />
-              <span>+1 (555) 123-4567</span>
-            </div>
+            
             <div className="flex items-center space-x-2">
               <MapPin className="w-4 h-4 text-primary" />
-              <span>San Francisco, CA</span>
+              <span>Indore, India</span>
             </div>
           </div>
         </div>
 
         <Separator className="mb-6" />
 
-        {/* Bottom Section */}
-        <div className="flex flex-col md:flex-row items-center justify-between space-y-4 md:space-y-0">
-          <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-            <span>© {currentYear} MediCall. All rights reserved.</span>
-            <div className="flex items-center space-x-1">
-              <span>Made with</span>
-              <Heart className="w-4 h-4 text-red-500 fill-current" />
-              <span>in San Francisco</span>
-            </div>
-          </div>
-          <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-            <span>🌟 Trusted by 1M+ users worldwide</span>
-            <div className="flex items-center space-x-1">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-              <span>All systems operational</span>
-            </div>
-          </div>
-        </div>
+        
       </div>
     </footer>
   )

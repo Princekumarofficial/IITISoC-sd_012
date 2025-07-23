@@ -34,7 +34,11 @@ import {
   Smile,
   Download,
   ExternalLink,
+  Mail,
+  Twitter,Linkedin,Github
 } from "lucide-react"
+import { CameraManager } from "../components/Camera-manager";
+import { Footer } from "../components/Footer";
 
 const faqs = [
   {
@@ -165,6 +169,28 @@ const tutorials = [
     views: "11.2k",
   },
 ]
+const teamContacts = {
+  mail: [
+    { name: "Mr. Abhay Lodhi", value: "abhaylodhi128135@gmail.com" },
+    { name: "Mr. Pratyush Gupta", value: "pratyush1534@gmail.com" },
+    { name: "Mr. Hemant Yadav", value: "412006hemantyadav@gmail.com" },
+  ],
+  twitter: [
+    { name: "Mr. Abhay Lodhi", value: "@AbhayLodhi014" },
+    { name: "Mr. Pratyush Gupta", value: "@Pratyush_131" },
+    { name: "Mr. Hemant Yadav", value: "@_hemant2435" },
+  ],
+  linkedin: [
+    { name: "Mr. Abhay Lodhi", value: "linkedin.com/in/abhay-lodhi-a5a21231a" },
+    { name: "Mr. Pratyush Gupta", value: "linkedin.com/in/pratyush-gupta-ba4102331" },
+    { name: "Mr. Hemant Yadav", value: "linkedin.com/in/hemant-yadav-a86497327" },
+  ],
+  github: [
+    { name: "Mr. Abhay Lodhi", value: "github.com/abhaylodhi014" },
+    { name: "Mr. Pratyush Gupta", value: "github.com/PratyushG434" },
+    { name: "Mr. Hemant Yadav", value: "github.com/hemant4106" },
+  ],
+}
 
 const quickLinks = [
   {
@@ -191,23 +217,15 @@ const quickLinks = [
     description: "Configure your preferences",
     action: "settings",
   },
-  {
-    icon: <MessageSquare className="w-5 h-5" />,
-    title: "Chat Support",
-    description: "Get instant help",
-    action: "chat-support",
-  },
-  {
-    icon: <Book className="w-5 h-5" />,
-    title: "User Guide",
-    description: "Complete documentation",
-    action: "user-guide",
-  },
+
+
 ]
 
 const categories = ["All", "Getting Started", "Features", "Security", "Technical", "Troubleshooting", "Plans"]
 
 function HelpContent() {
+   const [showCameraManager, setShowCameraManager] = useState(false);
+    const [activeContact, setActiveContact] = useState("mail");
   const [searchQuery, setSearchQuery] = useState("")
   const [activeTab, setActiveTab] = useState("faq")
   const [selectedCategory, setSelectedCategory] = useState("All")
@@ -231,22 +249,13 @@ function HelpContent() {
   const handleQuickAction = (action: string) => {
     switch (action) {
       case "start-meeting":
-        addNotification({
-          type: "success",
-          title: "Starting Meeting",
-          message: "Creating a new meeting room...",
-        })
-        setTimeout(() => navigate("/meeting/new"), 1000)
+        navigate(`/`);
         break
       case "join-meeting":
-        addNotification({
-          type: "info",
-          title: "Join Meeting",
-          message: "Enter meeting ID to join...",
-        })
+        navigate("/preJoin")
         break
       case "test-camera":
-        navigate("/dashboard")
+        setShowCameraManager(true);
         break
       case "settings":
         addNotification({
@@ -315,7 +324,7 @@ function HelpContent() {
         </div>
       </header>
 
-      <div className="container mx-auto px-4 py-8">
+      <div className="container  mx-auto px-4 py-8">
         {/* Hero Section */}
         <div className="text-center mb-12 animate-fade-in">
           <h2 className="text-4xl font-bold mb-4 bg-gradient-to-r from-primary via-purple-500 to-blue-600 bg-clip-text text-transparent">
@@ -338,7 +347,10 @@ function HelpContent() {
         </div>
 
         {/* Quick Links */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-12 animate-slide-in-up">
+         <div className="w-[100vw] flex justify-center ">
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 mb-12 animate-slide-in-up">
+
           {quickLinks.map((link, index) => (
             <Card
               key={index}
@@ -355,27 +367,46 @@ function HelpContent() {
             </Card>
           ))}
         </div>
+         </div>
+        
 
         {/* Main Content */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="animate-slide-in-left">
-          <TabsList className="grid w-full grid-cols-4 glass glow">
-            <TabsTrigger value="faq">
+          {showCameraManager && (
+  <div className="fixed inset-0 z-[100] flex items-center justify-center  backdrop-blur-sm">
+    <div className="w-[90%] max-w-xl glass glow rounded-xl shadow-2xl animate-fade-in border border-muted">
+      <div className="flex items-center justify-between px-6 py-3 border-b border-muted-foreground">
+        <h3 className="text-lg font-semibold text-muted-foreground">Camera Test</h3>
+        <button
+          onClick={() => setShowCameraManager(false)}
+          className="text-sm text-muted-foreground hover:text-primary"
+        >
+          ✕
+        </button>
+      </div>
+      <div className="p-6">
+        <CameraManager />
+      </div>
+    </div>
+  </div>
+)}
+
+          <TabsList className="flex   w-full  glass justify-center items-center glow">
+            <TabsTrigger value="faq" className="w-full sm:w-auto flex-1 text-center px-4">
               <HelpCircle className="w-4 h-4 mr-2" />
               FAQ
             </TabsTrigger>
-            <TabsTrigger value="tutorials">
-              <Play className="w-4 h-4 mr-2" />
-              Tutorials
-            </TabsTrigger>
-            <TabsTrigger value="guides">
+            
+            <TabsTrigger value="guides" className="w-full sm:w-auto flex-1 text-center px-4">
               <Book className="w-4 h-4 mr-2" />
               Guides
             </TabsTrigger>
-            <TabsTrigger value="contact">
+            <TabsTrigger value="contact" className="w-full sm:w-auto flex-1 text-center px-4">
               <MessageSquare className="w-4 h-4 mr-2" />
               Contact
             </TabsTrigger>
           </TabsList>
+          
 
           {/* FAQ Tab */}
           <TabsContent value="faq" className="space-y-6">
@@ -482,7 +513,8 @@ function HelpContent() {
 
           {/* Guides Tab */}
           <TabsContent value="guides" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+
               <Card className="glass glow breathe">
                 <CardHeader>
                   <CardTitle className="flex items-center">
@@ -519,10 +551,7 @@ function HelpContent() {
                       <p className="text-sm text-muted-foreground">Create a meeting or join an existing one</p>
                     </div>
                   </div>
-                  <Button className="w-full glass glow ripple">
-                    <ExternalLink className="w-4 h-4 mr-2" />
-                    View Full Guide
-                  </Button>
+                
                 </CardContent>
               </Card>
 
@@ -551,10 +580,6 @@ function HelpContent() {
                     <CheckCircle className="w-5 h-5 text-green-500" />
                     <span className="text-sm">GDPR compliant</span>
                   </div>
-                  <Button variant="outline" className="w-full glass glow ripple">
-                    <Shield className="w-4 h-4 mr-2" />
-                    Privacy Policy
-                  </Button>
                 </CardContent>
               </Card>
 
@@ -579,10 +604,7 @@ function HelpContent() {
                     <h4 className="font-semibold text-sm">Privacy Controls</h4>
                     <p className="text-xs text-muted-foreground">Turn features on/off as needed</p>
                   </div>
-                  <Button variant="outline" className="w-full glass glow ripple">
-                    <Smile className="w-4 h-4 mr-2" />
-                    Learn More
-                  </Button>
+                 
                 </CardContent>
               </Card>
 
@@ -607,10 +629,7 @@ function HelpContent() {
                     <h4 className="font-semibold text-sm">Hardware</h4>
                     <p className="text-xs text-muted-foreground">Camera, microphone, modern CPU</p>
                   </div>
-                  <Button variant="outline" className="w-full glass glow ripple">
-                    <Download className="w-4 h-4 mr-2" />
-                    Test Your System
-                  </Button>
+                  
                 </CardContent>
               </Card>
             </div>
@@ -618,94 +637,98 @@ function HelpContent() {
 
           {/* Contact Tab */}
           <TabsContent value="contact" className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card className="glass glow breathe">
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <MessageSquare className="w-5 h-5 mr-2" />
-                    Live Chat Support
-                  </CardTitle>
-                  <CardDescription>Get instant help from our support team</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-                    <span className="text-sm text-green-600">Available now</span>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    Our support team is online and ready to help you with any questions or issues.
-                  </p>
-                  <Button className="w-full glass glow ripple" onClick={() => handleQuickAction("chat-support")}>
-                    <MessageSquare className="w-4 h-4 mr-2" />
-                    Start Live Chat
-                  </Button>
-                </CardContent>
-              </Card>
+            <div className="flex justify-center items-center md:grid-cols-2 gap-6">
+                 <section className="space-y-8 animate-slide-in-left">
+      <div className="text-center space-y-4">
+        <h2 className="text-3xl font-bold">Get In Touch</h2>
+        <p className="text-lg text-muted-foreground">
+          Have questions or want to learn more? We'd love to hear from you!
+        </p>
+      </div>
+      <Card className="glass glow max-w-2xl mx-auto">
+        <CardContent className="p-8">
+         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
 
-              <Card className="glass glow breathe">
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <Phone className="w-5 h-5 mr-2" />
-                    Phone Support
-                  </CardTitle>
-                  <CardDescription>Speak directly with our experts</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <p className="text-sm font-semibold">+1 (555) 123-4567</p>
-                    <p className="text-xs text-muted-foreground">Monday - Friday: 9 AM - 6 PM PST</p>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    Call us for urgent issues or complex technical problems.
-                  </p>
-                  <Button variant="outline" className="w-full glass glow ripple">
-                    <Phone className="w-4 h-4 mr-2" />
-                    Call Now
-                  </Button>
-                </CardContent>
-              </Card>
+            <Button
+              variant="outline"
+              className="glass glow ripple h-16 flex-col"
+              onClick={() => setActiveContact("mail")}
+            >
+              <Mail className="w-6 h-6 mb-2" />
+              <span className="text-xs">Mail</span>
+            </Button>
+            <Button
+              variant="outline"
+              className="glass glow ripple h-16 flex-col"
+              onClick={() => setActiveContact("twitter")}
+            >
+              <Twitter className="w-6 h-6 mb-2" />
+              <span className="text-xs">Twitter</span>
+            </Button>
+            <Button
+              variant="outline"
+              className="glass glow ripple h-16 flex-col"
+              onClick={() => setActiveContact("linkedin")}
+            >
+              <Linkedin className="w-6 h-6 mb-2" />
+              <span className="text-xs">LinkedIn</span>
+            </Button>
+            <Button
+              variant="outline"
+              className="glass glow ripple h-16 flex-col"
+              onClick={() => setActiveContact("github")}
+            >
+              <Github className="w-6 h-6 mb-2" />
+              <span className="text-xs">GitHub</span>
+            </Button>
+          </div>
 
-              <Card className="glass glow breathe md:col-span-2">
-                <CardHeader>
-                  <CardTitle className="flex items-center">
-                    <Heart className="w-5 h-5 mr-2" />
-                    Community & Resources
-                  </CardTitle>
-                  <CardDescription>Connect with other users and find additional resources</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="text-center p-4 rounded-lg bg-muted/20">
-                      <Users className="w-8 h-8 mx-auto mb-2 text-primary" />
-                      <h4 className="font-semibold text-sm mb-1">Community Forum</h4>
-                      <p className="text-xs text-muted-foreground mb-3">Connect with other MediCall users</p>
-                      <Button size="sm" variant="outline" className="glass">
-                        Join Forum
-                      </Button>
-                    </div>
-                    <div className="text-center p-4 rounded-lg bg-muted/20">
-                      <Book className="w-8 h-8 mx-auto mb-2 text-primary" />
-                      <h4 className="font-semibold text-sm mb-1">Documentation</h4>
-                      <p className="text-xs text-muted-foreground mb-3">Complete technical documentation</p>
-                      <Button size="sm" variant="outline" className="glass">
-                        View Docs
-                      </Button>
-                    </div>
-                    <div className="text-center p-4 rounded-lg bg-muted/20">
-                      <Video className="w-8 h-8 mx-auto mb-2 text-primary" />
-                      <h4 className="font-semibold text-sm mb-1">Video Library</h4>
-                      <p className="text-xs text-muted-foreground mb-3">Watch detailed tutorials</p>
-                      <Button size="sm" variant="outline" className="glass">
-                        Watch Videos
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+          <div className="mt-8 text-center space-y-2">
+            {["mail", "twitter", "linkedin", "github"].includes(activeContact) &&
+              teamContacts[activeContact].map((m, i) => (
+                <p key={i} className="text-sm text-muted-foreground">
+                  <strong>{m.name}:</strong>{" "}
+                  <a
+                    href={
+                      activeContact === "mail"
+                        ? `mailto:${m.value}`
+                        : activeContact === "github"
+                        ? `https://${m.value}`
+                        : activeContact === "linkedin"
+                        ? `https://${m.value}`
+                        : `https://twitter.com/${m.value.replace("@", "")}`
+                    }
+                    className="underline hover:text-primary"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {m.value}
+                  </a>
+                </p>
+              ))}
+
+            {activeContact === "default" && (
+              <>
+                <p className="text-sm text-muted-foreground">
+                  <strong>Email:</strong> hello@medicall.com
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  <strong>Phone:</strong> +1 (555) 123-4567
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  <strong>Address:</strong> 123 Innovation Drive, San Francisco, CA 94105
+                </p>
+              </>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </section>
             </div>
           </TabsContent>
         </Tabs>
       </div>
+      <Footer/>
     </div>
   )
 }

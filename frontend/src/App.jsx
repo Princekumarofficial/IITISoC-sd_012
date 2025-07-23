@@ -13,6 +13,7 @@ import PreJoinPage from './pages/PreJoin'
 
 import { useAuthStore } from './store/useAuthStore'
 import { Loader } from 'lucide-react'
+import LegalPage from './pages/LegalPage'
 
 
 function App() {
@@ -48,7 +49,7 @@ function App() {
         <Route path="/profilepage" element={authUser ? <ProfilePage /> : <Navigate to="/" />} />
         <Route path="/contactus" element={authUser ? <ContactForm /> : <Navigate to="/" />} />
         <Route path="/preJoin/:id?" element={authUser ? <PreJoinPage />: <Navigate to="/" />} />
-          
+          <Route path="/legal" element={<LegalPage />} />
       </Routes>
      
      
