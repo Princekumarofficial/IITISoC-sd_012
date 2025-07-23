@@ -22,7 +22,7 @@ export function getEmojiFromEmotion(emotion: string): string {
 
   const lowerEmotion = emotion?.toLowerCase() as EmotionType;
 
-  return emojiMap[lowerEmotion] ?? "❓";
+  return emojiMap[lowerEmotion] ?? "😄";
 }
 
 
@@ -38,5 +38,5 @@ export function getEmotionFromEmoji(emoji: string): EmotionType | "unknown" {
     "😲": "surprised",
   };
 
-  return reverseEmojiMap[emoji] ?? "unknown";
+  return reverseEmojiMap[emoji] ?? "neutral";
 }
