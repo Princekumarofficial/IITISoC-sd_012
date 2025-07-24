@@ -1,7 +1,7 @@
 "use client"
 
 import { useState ,useEffect} from "react"
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "../components/ui/Button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/Card"
 import { Badge } from "../components/ui/Badge"
@@ -92,7 +92,17 @@ const getDuration = (start: string, participants: any[]) => {
   return hours > 0 ? `${hours}h ${minutes}min` : `${minutes} min`;
 };
 
+const location = useLocation();
 
+useEffect(() => {
+  if (location.hash) {
+    const id = location.hash.replace("#", "");
+    const el = document.getElementById(id);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }
+}, [location.hash]);
 
 
 
@@ -154,11 +164,11 @@ const getDuration = (start: string, participants: any[]) => {
       <FloatingParticles />
       <Navbar />
 
-      <div className="pt-16">
-        <div className="container mx-auto px-2 py-8">
+      <div className="md:pt-6">
+        <div className="container min-h-[680px] mx-auto px-2 py-8">
           <div className="flex gap-8">
             {/* Sidebar */}
-            <aside className="w-64 space-y-4 slide-in-left">
+            <aside className="hidden md:block w-64 space-y-4 slide-in-left">
               <Card className=" glass glow breathe">
                 <CardContent className="p-4">
                   <nav className="space-y-2">
@@ -231,7 +241,7 @@ const getDuration = (start: string, participants: any[]) => {
             </aside>
 
             {/* Main Content */}
-            <main className="flex-1 space-y-6">
+            <main className="flex-1 w-[100vw] space-y-6">
               <div className="slide-in-up">
                 <h2 className="text-3xl font-bold mb-2 bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">
                   Welcome back, {authUser.username}! 👋
@@ -305,7 +315,7 @@ const getDuration = (start: string, participants: any[]) => {
               </div>
 
               {/* Call History */}
-              <Card className="glass glow slide-in-up breathe">
+              <Card id="callhistory" className="glass glow slide-in-up breathe">
                 <CardHeader>
                   <CardTitle className="text-2xl flex items-center">
                     <History className="w-6 h-6 mr-2" />

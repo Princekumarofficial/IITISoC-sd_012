@@ -107,7 +107,7 @@ export function Footer() {
         </div>
 
         {/* Contact Info */}
-        <div onClick={()=>(navigate("/about"))} className="bg-muted/30 rounded-lg p-6 mb-8 glass">
+        <div onClick={()=>(navigate("/about#contact"))} className="bg-muted/30 rounded-lg p-6 mb-8 glass">
           <h4 className="font-semibold mb-4 bg-[#925ef0] w-fit p-2 rounded-md flex items-center">
             <Phone  className="w-4 h-4 mr-2" />
             Get in Touch

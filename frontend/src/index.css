@@ -440,7 +440,11 @@
   margin-left: 7px;
   margin-right: 7px;
 }
-
+@media screen and (max-width: 430px) and (min-width:0px){
+.yourstats{
+  display: none;
+}
+}
 
 @media screen and (max-width: 440px) and (min-width:0px) {
    .controlbar-middle-div p{
