@@ -40,7 +40,7 @@ import { getEmojiFromEmotion } from "../utils/getEmoji";
 import { useParams } from "react-router-dom";
 import type { FaceLandmarks68 } from "@vladmandic/face-api";
 import { ParticipantsList } from "../components/Participants";
-import { useMeetingChatStore  } from "../store/useMeetingStore";
+import { useMeetingChatStore } from "../store/useMeetingStore";
 
 
 import type { LandmarkSection } from "../hooks/useSFUClient";
@@ -65,8 +65,8 @@ function MeetingContent() {
     addleaveTime,
     addEmotion,
   } = useMeetingChatStore()
-  
 
+console.log(participants);
 
 
   const { id } = useParams();
@@ -82,6 +82,9 @@ function MeetingContent() {
   const [activeTab, setActiveTab] = useState("emotions")
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [meetingDuration, setMeetingDuration] = useState(0)
+  const [emotionList, setEmotionList] = useState<
+    { id: string; name: string; emotion: string; confidence: number }[]
+  >([]);
   const [userEmotions, setUserEmotions] = useState<{
     [userId: string]: { emotion: string; confidence: number, landmarks: LandmarkSection, isOverlayOn: boolean };
   }>({});
@@ -92,6 +95,10 @@ function MeetingContent() {
       ...prev,
       [userId]: { emotion, confidence, landmarks, isOverlayOn },
     }));
+    setEmotionList((prev) => [
+      ...prev,
+      { id: userId, name: remoteStreams.find(p => p.peerId === userId)?.peerName || "Unknown", emotion, confidence },
+    ]);
   });
   const [localEmotion, setLocalEmotion] = useState<string>("");
   const [localEmotionConfidence, setLocalEmotionConfidence] = useState<number>(0);
@@ -99,6 +106,7 @@ function MeetingContent() {
   const [isScreenSharing, setIsScreenSharing] = useState<Boolean>(false);
   const [theme, setTheme] = useState("light");
   const { authUser, logout } = useAuthStore();
+
   const maxTiles = useMaxTilesByScreen();
   const participantsList = [
     {
@@ -110,6 +118,16 @@ function MeetingContent() {
       name: remote.peerName,
     })),
   ];
+
+  useEffect(() => {
+  if (!localEmotion || localEmotionConfidence === null) return;
+
+   setEmotionList((prev) => [
+      ...prev,
+      { id: authUser._id, name: "You", emotion: localEmotion, confidence: localEmotionConfidence },
+    ]);
+}, [localEmotion, localEmotionConfidence]);
+
 
   useEffect(() => {
     const { stream } = useMediaStore.getState();
@@ -167,7 +185,7 @@ function MeetingContent() {
     });
   };
 
-  const handleLeaveMeeting = async() => {
+  const handleLeaveMeeting = async () => {
     const stream = useMediaStore.getState().stream;
     if (stream) {
       stream.getTracks().forEach(track => track.stop());
@@ -180,14 +198,14 @@ function MeetingContent() {
     })
     stopMediaTracks(localStream)
 
-     try {
-        await addleaveTime(meeting.meetingId);
-        
-      } catch (error) {
-        console.error(error);
-        
-      }
-    
+    try {
+      await addleaveTime(meeting.meetingId);
+
+    } catch (error) {
+      console.error(error);
+
+    }
+
     setTimeout(() => {
       navigate("/dashboard")
     }, 1000)
@@ -416,12 +434,12 @@ function MeetingContent() {
           <div className="flex-1 meeting-main">
             {/* 🛠️ Modified: Responsive dynamic grid */}
             <div className="h-full w-full p-4 overflow-auto">
-  <div className="grid gap-4 w-full h-full"
-  style={{
-    gridTemplateColumns: `repeat(auto-fit, minmax(300px, 1fr))`,
-    gridAutoRows: "minmax(200px, 1fr)" // Ensures consistent row height
-  }}
->      {/* Local video with camera manager */}
+              <div className="grid gap-4 w-full h-full"
+                style={{
+                  gridTemplateColumns: `repeat(auto-fit, minmax(300px, 1fr))`,
+                  gridAutoRows: "minmax(200px, 1fr)" // Ensures consistent row height
+                }}
+              >      {/* Local video with camera manager */}
 
                 {localStream && (
                   <VideoTile
@@ -506,7 +524,7 @@ function MeetingContent() {
 
               <div className="flex-1 overflow-y-auto">
 
-                {activeTab === "emotions" && <EmotionFeed participants={participants} />}
+                {activeTab === "emotions" && <EmotionFeed participants={emotionList} />}
                 {activeTab === "chat" && <ChatPanel />}
                 {activeTab === "participants" && <ParticipantsList participants={participantsList} />}
               </div>
