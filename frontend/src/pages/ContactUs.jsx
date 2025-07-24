@@ -1,20 +1,20 @@
-import { useState ,useEffect} from 'react';
+import { useState ,useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Send, Check, Loader2 } from 'lucide-react';
+import { Send, Check, Loader2, Home } from 'lucide-react'; // ⬅️ NEW: Imported Home icon
 import { TailCursor } from "../components/Tail-cursor"
-import API from "../service/api.js"
-
-
+import { useNavigate } from "react-router-dom";
+import API from "../service/api.js";
 
 const ContactForm = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     message: ''
   });
   const [formSubmitted, setFormSubmitted] = useState(false);
-  const [status, setStatus] = useState('idle'); // 'idle', 'submitting', 'success', 'error'
-  
+  const [status, setStatus] = useState('idle');
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -22,14 +22,13 @@ const ContactForm = () => {
       [name]: value
     }));
   };
-  
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setStatus('submitting');
     
     try {
-           let response = await API.contactUs(formData);
-      
+      let response = await API.contactUs(formData);
       if (response.isSuccess) {
         setStatus('success');
         setFormData({ name: '', email: '', message: '' });
@@ -46,22 +45,33 @@ const ContactForm = () => {
 
   useEffect(() => {
     if (formSubmitted) {
-      // Navigate only after form submission is successful
-      navigate('/');
+      navigate('/dashboard');
     }
-  }, [formSubmitted, navigate]); 
-  
+  }, [formSubmitted, navigate]);
+
   return (
     <>
-     <div className="min-h-screen bg-gradient-to-br from-background via-primary/5 to-blue-600/5 relative py-12">
-      <TailCursor/>
-      <div className="container mx-auto px-4">
-        <motion.section 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="max-w-2xl mx-auto glass backdrop-blur-sm rounded-2xl overflow-hidden border border-primary/20 shadow-lg glow"
-        >
+      <div className="min-h-screen bg-gradient-to-br from-background via-primary/5 to-blue-600/5 relative py-12">
+        <TailCursor />
+
+        {/* Home Button - ⬅️ NEW */}
+        <div className="absolute top-5 left-5 z-50">
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl hover:bg-white/30 border border-white/10 backdrop-blur-sm transition-all duration-200 shadow-md"
+          >
+            <Home className="w-5 h-5" />
+            Home
+          </button>
+        </div>
+
+        <div className="container mx-auto px-4">
+          <motion.section 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="max-w-2xl mx-auto glass backdrop-blur-sm rounded-2xl overflow-hidden border border-primary/20 shadow-lg glow"
+          >
           <div className="bg-gradient-to-r from-primary/10 to-blue-600/10 p-6 border-b border-primary/10">
             <h2 className="text-3xl font-bold bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">
               Contact Us

@@ -25,7 +25,8 @@ export function Footer() {
     product: [
       { label: "Features", href: "/about#features" },
        { label: "About Us", href: "/about#top" },
-       { label: "Contact", href: "/about#contact" },
+      //  { label: "Contact", href: "/about#contact" },
+       {label : "CountactUs" , href: "/contactus"}
     ],
     
     legal: [
