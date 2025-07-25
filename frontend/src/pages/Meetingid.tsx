@@ -66,7 +66,7 @@ function MeetingContent() {
     addEmotion,
   } = useMeetingChatStore()
 
-console.log(participants);
+  console.log(participants);
 
 
   const { id } = useParams();
@@ -95,10 +95,25 @@ console.log(participants);
       ...prev,
       [userId]: { emotion, confidence, landmarks, isOverlayOn },
     }));
-    setEmotionList((prev) => [
-      ...prev,
-      { id: userId, name: remoteStreams.find(p => p.peerId === userId)?.peerName || "Unknown", emotion, confidence },
-    ]);
+    setEmotionList((prev) => {
+      // Find the last entry for this user
+      const lastEmotion = [...prev].reverse().find(e => e.id === userId);
+
+      // Only add if emotion is different
+      if (!lastEmotion || lastEmotion.emotion !== emotion) {
+        return [
+          ...prev,
+          {
+            id: userId,
+            name: remoteStreams.find(p => p.peerId === userId)?.peerName || "Unknown",
+            emotion,
+            confidence,
+          },
+        ];
+      }
+
+      return prev; // No change if emotion is the same
+    });
   });
   const [localEmotion, setLocalEmotion] = useState<string>("");
   const [localEmotionConfidence, setLocalEmotionConfidence] = useState<number>(0);
@@ -120,13 +135,23 @@ console.log(participants);
   ];
 
   useEffect(() => {
-  if (!localEmotion || localEmotionConfidence === null) return;
+    if (!localEmotion || localEmotionConfidence === null) return;
 
-   setEmotionList((prev) => [
-      ...prev,
-      { id: authUser._id, name: "You", emotion: localEmotion, confidence: localEmotionConfidence },
-    ]);
-}, [localEmotion, localEmotionConfidence]);
+    setEmotionList((prev) => {
+      // Find the last entry from the same user (you)
+      const lastEmotion = [...prev].reverse().find(e => e.id === authUser._id);
+
+      // Only add if emotion is different
+      if (!lastEmotion || lastEmotion.emotion !== localEmotion) {
+        return [
+          ...prev,
+          { id: authUser._id, name: "You", emotion: localEmotion, confidence: localEmotionConfidence },
+        ];
+      }
+
+      return prev; // No change if emotion is the same
+    });
+  }, [localEmotion, localEmotionConfidence]);
 
 
   useEffect(() => {
@@ -524,7 +549,7 @@ console.log(participants);
 
               <div className="flex-1 overflow-y-auto">
 
-                {activeTab === "emotions" && <EmotionFeed participants={emotionList} />}
+                {activeTab === "emotions" && <EmotionFeed participants={emotionList} participantList={participants} />}
                 {activeTab === "chat" && <ChatPanel />}
                 {activeTab === "participants" && <ParticipantsList participants={participantsList} />}
               </div>

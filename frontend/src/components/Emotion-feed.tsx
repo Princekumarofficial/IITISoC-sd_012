@@ -16,11 +16,12 @@ interface Participant {
 
 interface EmotionFeedProps {
   participants: Participant[]
+  participantList: Participant[]
 }
 
 // const emojiReactions = ["😊", "😄", "👍", "👏", "❤️", "🎉", "💡", "🤔", "😮", "🔥"]
 
-export function EmotionFeed({ participants }: EmotionFeedProps) {
+export function EmotionFeed({ participants, participantList }: EmotionFeedProps) {
   const [recentEmotions, setRecentEmotions] = useState<
     {
       time: string
@@ -30,6 +31,7 @@ export function EmotionFeed({ participants }: EmotionFeedProps) {
       confidence: number
     }[]
   >([])
+    console.log("Participants in EmotionFeed:", participantList);
 
   const [overallMood, setOverallMood] = useState(78)
 
@@ -45,7 +47,7 @@ export function EmotionFeed({ participants }: EmotionFeedProps) {
       ...prev,
       ...participants.map((p) => ({
         time: getTime(),
-        participant: p.name,
+        participant:(p.name!=="You")?participantList.find((pl) => pl.id === p.id)?.name || "Unknown":"You",
         emotion: p.emotion,
         type: p.emotion, // or map emoji to readable type
         confidence: Math.round(p.confidence * 100),
