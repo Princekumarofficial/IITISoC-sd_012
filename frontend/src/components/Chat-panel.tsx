@@ -29,6 +29,7 @@ export function ChatPanel() {
   useEffect(() => {
     if (meetingId) {
       fetchMeetingById(meetingId);
+      
       subscribeToMeetingMessages(meetingId);
     }
     return () => {

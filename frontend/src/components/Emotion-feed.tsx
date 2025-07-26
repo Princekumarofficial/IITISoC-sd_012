@@ -66,7 +66,7 @@ export function EmotionFeed({ participants, participantList }: EmotionFeedProps)
   return (
     <div className="p-4 space-y-4">
       {/* Overall Mood */}
-      <Card>
+      {/* <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-sm flex items-center">
             <TrendingUp className="w-4 h-4 mr-2" />
@@ -82,7 +82,7 @@ export function EmotionFeed({ participants, participantList }: EmotionFeedProps)
           </div>
           <Progress value={overallMood} className="h-2" />
         </CardContent>
-      </Card>
+      </Card> */}
 
       {/* Live Emotion Feed */}
       <Card>

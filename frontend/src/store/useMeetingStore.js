@@ -74,6 +74,16 @@ export const useMeetingChatStore = create((set, get) => ({
       set((state) => ({
         messages: [...state.messages, res.data], // backend returns the added message
       }));
+
+      // Emit to other participants
+    const socket = useAuthStore.getState().socket;
+    if (socket) {
+      socket.emit("send-meeting-message", {
+        meetingId,
+        message: res.data.message,
+        sender:res.data.sender,
+      });
+    }
     } catch (error) {
       console.error("Error in sendMeetingMessage:", error);
     } finally {
@@ -104,7 +114,8 @@ export const useMeetingChatStore = create((set, get) => ({
   subscribeToMeetingMessages: (meetingId) => {
     const socket = useAuthStore.getState().socket;
     if (!socket) return;
-    socket.on("newChatMessage", (newMessage) => {
+    socket.emit("joinMeetingRoom", meetingId);
+    socket.on("receive-meeting-message", (newMessage) => {
       if (newMessage?.meetingId !== meetingId) return;
       set((state) => ({
         messages: [...state.messages, newMessage],
@@ -116,7 +127,7 @@ export const useMeetingChatStore = create((set, get) => ({
   unsubscribeFromMeetingMessages: () => {
     const socket = useAuthStore.getState().socket;
     if (!socket) return;
-    socket.off("newChatMessage");
+    socket.off("receive-meeting-message");
   },
 
   // ✅ Clear meeting data
