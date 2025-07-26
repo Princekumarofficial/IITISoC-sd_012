@@ -96,7 +96,7 @@ export function ChatList() {
                   selectedUser?._id === user.id ? "bg-primary/10 border border-primary/20" : ""
                 }`}
               >
-                <div className="flex items-center space-x-3 glow rounded-lg">
+                <div className="flex items-center space-x-3 glow2 rounded-lg">
                   <div className="relative">
                     <Avatar className="w-12 h-12">
                       <AvatarImage src={user.avatar} />

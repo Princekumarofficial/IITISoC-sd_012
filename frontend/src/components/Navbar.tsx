@@ -56,9 +56,17 @@ export function Navbar() {
   
   // Init theme based on OS setting
   useEffect(() => {
+  const storedTheme = localStorage.getItem("theme");
+  if (storedTheme === "dark" || storedTheme === "light") {
+    setTheme(storedTheme);
+  } else {
     const prefersDark = window.matchMedia?.("(prefers-color-scheme: dark)").matches;
-    setTheme(prefersDark ? "light" : "dark");
-  }, []);
+    const defaultTheme = prefersDark ? "dark" : "light";
+    setTheme(defaultTheme);
+    localStorage.setItem("theme", defaultTheme);
+  }
+}, []);
+
 
   // Apply theme to <html>
   useEffect(() => {
@@ -215,7 +223,12 @@ useEffect(() => {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              onClick={() => {
+              const newTheme = theme === "dark" ? "light" : "dark";
+              setTheme(newTheme);
+              localStorage.setItem("theme", newTheme);
+            }}
+
               className="glass glow ripple relative"
               aria-label="Toggle theme"
             >

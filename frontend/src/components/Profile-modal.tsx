@@ -23,9 +23,10 @@ import { useAuthStore } from "../store/useAuthStore"
 interface ProfileModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  allcalls: any[]; 
 }
 
-export function ProfileModal({ open, onOpenChange }: ProfileModalProps) {
+export function ProfileModal({ open, onOpenChange , allcalls }: ProfileModalProps) {
   const { authUser } = useAuthStore()
   const { addNotification } = useNotifications()
 
@@ -83,9 +84,10 @@ export function ProfileModal({ open, onOpenChange }: ProfileModalProps) {
     }
   }
 
+
   const stats = {
-    totalCalls: 156,
-    totalHours: 89,
+    totalCalls: allcalls.length,
+    totalMinutes: 25,
     happinessScore: 92,
     engagementLevel: 88,
   }
@@ -222,7 +224,7 @@ export function ProfileModal({ open, onOpenChange }: ProfileModalProps) {
               </Card>
               <Card className="glass glow">
                 <CardContent className="p-4 text-center">
-                  <div className="text-2xl font-bold text-blue-600">{stats.totalHours}h</div>
+                  <div className="text-2xl font-bold text-blue-600">{stats.totalMinutes}M</div>
                   <div className="text-sm text-muted-foreground">Call Time</div>
                 </CardContent>
               </Card>
@@ -242,8 +244,8 @@ export function ProfileModal({ open, onOpenChange }: ProfileModalProps) {
           </TabsContent>
         </Tabs>
 
-        <div className="flex justify-end space-x-2 pt-4">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+        <div className="flex justify-end space-x-2 pt-4 ">
+          <Button variant="outline" className="glow" onClick={() => onOpenChange(false)}>
             Close
           </Button>
         </div>

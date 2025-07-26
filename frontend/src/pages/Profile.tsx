@@ -5,6 +5,7 @@ import { useState } from "react"
 import { useAuthStore } from "../store/useAuthStore"
 import { Camera, Mail, User, Briefcase, Building2, Phone, Info } from "lucide-react"
 import { Card, CardHeader, CardTitle, CardContent } from "../components/ui/Card"
+import { FloatingParticles } from "../components/Floating-particle"
 import { Avatar, AvatarImage, AvatarFallback } from "../components/ui/Avatar"
 import { Badge } from "../components/ui/Badge"
 import { Input } from "../components/ui/Input"
@@ -70,6 +71,7 @@ const ProfilePageContent: React.FC = () => {
   return (
     <>
       <TailCursor />
+       <FloatingParticles />
       <Navbar />
       <div className="h-full pt-20 pb-10 px-4 max-w-3xl mx-auto space-y-6 animated-bg color-wave">
 

@@ -242,14 +242,11 @@ export function CallDetailsModal({ open, onOpenChange, meetingId }: CallDetailsM
           </div>
         </Tabs>
 
-        <div className="flex justify-end space-x-2 pt-4 border-t text-black">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+        <div className="flex justify-end space-x-2 pt-4 border-t ">
+          <Button variant="outline" className="glow" onClick={() => onOpenChange(false)}>
             Close
           </Button>
-          <Button className="glass glow">
-            <Download className="w-4 h-4 mr-2" />
-            Export Report
-          </Button>
+          
         </div>
       </DialogContent>
     </Dialog>

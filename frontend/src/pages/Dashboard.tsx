@@ -25,8 +25,8 @@ import { getEmojiFromEmotion } from "../utils/getEmoji";
 
 function DashboardContent() {
   const { authUser } = useAuthStore();
-  const [activeTab, setActiveTab] = useState("history")
-
+  const [activeTab, setActiveTab] = useState("history");
+ 
   const [showProfile, setShowProfile] = useState(false)
   const [showCameraTest, setShowCameraTest] = useState(false)
   const [showCallDetails, setShowCallDetails] = useState(false)
@@ -401,7 +401,7 @@ useEffect(() => {
       <Footer />
 
     
-      <ProfileModal open={showProfile} onOpenChange={setShowProfile} />
+      <ProfileModal open={showProfile} onOpenChange={setShowProfile}  allcalls={allCalls} />
       <CallDetailsModal
         open={showCallDetails}
         onOpenChange={setShowCallDetails}
