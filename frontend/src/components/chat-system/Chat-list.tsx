@@ -5,77 +5,104 @@ import { Button } from "../ui/Button"
 import { Input } from "../ui/Input"
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/Avatar"
 import { ScrollArea } from "../ui/Scroll-area"
-import { Search, Plus, MoreVertical, Pin } from "lucide-react"
+import { Search, Plus, MoreVertical } from "lucide-react"
 
 import { useAuthStore } from "../../store/useAuthStore"
 import { useChatStore } from "../../store/useChatStore"
 
 export function ChatList() {
-  const { getUsers, users, selectedUser, setSelectedUser } = useChatStore()
+  const {
+    getUsersAndCategorize,
+    users,
+    recentUsers,
+    newUsers,
+    selectedUser,
+    setSelectedUser,
+  } = useChatStore()
+
   const { onlineUsers } = useAuthStore()
+
   const [searchQuery, setSearchQuery] = useState("")
- 
   const [showOnlineOnly, setShowOnlineOnly] = useState(false)
+  const [activeTab, setActiveTab] = useState<"recent" | "new">("recent")
 
   useEffect(() => {
-    getUsers()
-  }, [getUsers])
+    getUsersAndCategorize()
+  }, [getUsersAndCategorize])
 
-  const filteredUsers = users
-    .filter((user) =>
-      (!showOnlineOnly || onlineUsers.includes(user._id)) &&
-      (
-        user.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        user.email?.toLowerCase().includes(searchQuery.toLowerCase())
+  const getFilteredUsers = (users: any[]) => {
+  return users
+    .filter((user) => {
+      const id =  user.userID
+      return (
+        (!showOnlineOnly || onlineUsers.includes(id)) &&
+        (user.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          user.email?.toLowerCase().includes(searchQuery.toLowerCase()))
       )
-    )
-    .map((user) => ({
-      _id: user.userID,
-      username: user.username,
-      avatar: user.avatar || "/profile.jpg",
-      email: user.email || "",
-      isOnline: onlineUsers.includes(user.userID),
-      
-    }))
-
-  const sortedUsers = [...filteredUsers].sort((a, b) => {
-    if (a.isPinned && !b.isPinned) return -1
-    if (!a.isPinned && b.isPinned) return 1
-    return 0
-  })
+    })
+    .map((user) => {
+      const id =  user.userID
+      return {
+        _id: id,
+        username: user.username,
+        avatar: user.avatar || "/profile.jpg",
+        email: user.email || "",
+        isOnline: onlineUsers.includes(id),
+      }
+    })
+}
 
 
-
-
+  const filteredUsers =
+    activeTab === "recent"
+      ? getFilteredUsers(recentUsers)
+      : getFilteredUsers(newUsers)
 
   return (
     <Card className="h-full glass my-5">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-xl">Messages</CardTitle>
-          <div className="flex items-center space-x-2">
-            <Button size="sm" variant="outline" className="glass">
-              <Plus className="w-4 h-4" />
-            </Button>
-            <Button size="sm" variant="outline" className="glass">
-              <MoreVertical className="w-4 h-4" />
-            </Button>
-          </div>
+          <CardTitle className="text-xl mb-4">Messages</CardTitle>
+          
         </div>
-        <div className="mt-2 flex items-center gap-2">
+
+        {/* Tabs */}
+        <div className="flex my-6 gap-2">
+          <Button
+            size="sm"
+            variant={activeTab === "recent" ? "default" : "outline"}
+            onClick={() => setActiveTab("recent")}
+          >
+            Recent
+          </Button>
+          <Button
+            size="sm"
+            variant={activeTab === "new" ? "default" : "outline"}
+            onClick={() => setActiveTab("new")}
+          >
+            New
+          </Button>
+        </div>
+
+        {/* Filters */}
+        <div className="mt-4 flex items-center gap-2">
           <label className="cursor-pointer flex items-center gap-2 text-xs">
             <input
               type="checkbox"
               checked={showOnlineOnly}
               onChange={(e) => setShowOnlineOnly(e.target.checked)}
-              className="checkbox checkbox-sm"
+              className="checkbox checkbox-sm my-2"
             />
             Show online only
           </label>
-          <span className="text-xs text-muted-foreground">({onlineUsers.length} online)</span>
+          <span className="text-xs text-muted-foreground">
+            ({onlineUsers.length} online)
+          </span>
         </div>
+
+        {/* Search */}
         <div className="relative mt-2">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground " />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             placeholder="Search users..."
             value={searchQuery}
@@ -86,14 +113,16 @@ export function ChatList() {
       </CardHeader>
 
       <CardContent className="p-0">
-        <ScrollArea className="h-[calc(100vh-200px)] custom-scrollbar">
+        <ScrollArea className="h-[calc(100vh-250px)] custom-scrollbar">
           <div className="space-y-1 p-2">
-            {sortedUsers.map((user) => (
+            {filteredUsers.map((user) => (
               <div
                 key={user._id}
-                onClick={() => setSelectedUser(user) }
+                onClick={() => setSelectedUser(user)}
                 className={`p-3 rounded-lg cursor-pointer transition-all hover:bg-muted/50 group ${
-                  selectedUser?._id === user.id ? "bg-primary/10 border border-primary/20" : ""
+                  selectedUser?._id === user._id
+                    ? "bg-primary/10 border border-primary/20"
+                    : ""
                 }`}
               >
                 <div className="flex items-center space-x-3 glow2 rounded-lg">
@@ -113,19 +142,22 @@ export function ChatList() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between mb-1">
-                      <div className="flex items-center space-x-2">
-                        <h3 className="font-semibold text-sm truncate">{user.username}</h3>
-                       
-                      </div>
-
+                      <h3 className="font-semibold text-sm truncate">
+                        {user.username}
+                      </h3>
                     </div>
-                    <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                    <p className="text-xs text-muted-foreground truncate">
+                      {user.email}
+                    </p>
                   </div>
                 </div>
               </div>
             ))}
-            {sortedUsers.length === 0 && (
-              <div className="text-center text-muted-foreground py-4 text-sm">No users found</div>
+
+            {filteredUsers.length === 0 && (
+              <div className="text-center text-muted-foreground py-4 text-sm">
+                No users found
+              </div>
             )}
           </div>
         </ScrollArea>

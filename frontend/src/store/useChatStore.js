@@ -6,17 +6,55 @@ import { useAuthStore } from "./useAuthStore";
 export const useChatStore = create((set, get) => ({
   messages: [],
   users: [],
+  newUsers: [],
+  recentUsers: [],
   selectedUser: null,
   isUsersLoading: false,
   isMessagesLoading: false,
 
-  getUsers: async () => {
+    getUsers: async () => {
     set({ isUsersLoading: true });
     try {
       const res = await API.getUsersForSidebar();
       set({ users: res.data });
     } catch (error) {
       
+    } finally {
+      set({ isUsersLoading: false });
+    }
+  },
+  getUsersAndCategorize: async () => {
+    set({ isUsersLoading: true });
+    try {
+      const res = await API.getUsersForSidebar();
+      const users = res.data;
+      const recentUsers = [];
+      const newUsers = [];
+
+      // Loop through each user and check if they have messages
+      for (const user of users) {
+        try {
+          const messagesRes = await API.getMessages(user.userID);
+          const messages = messagesRes.data;
+
+          if (messages.length > 0) {
+            recentUsers.push(user);
+          } else {
+            newUsers.push(user);
+          }
+        } catch (error) {
+          console.log(`Error fetching messages for user ${user._id}`, error);
+        }
+      }
+
+      set({
+        users,
+        recentUsers,
+        newUsers,
+      });
+
+    } catch (error) {
+      console.log("Error fetching users", error);
     } finally {
       set({ isUsersLoading: false });
     }

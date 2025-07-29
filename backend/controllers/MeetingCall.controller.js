@@ -20,6 +20,7 @@ export const createMeeting = async (req, res) => {
           name: req.user.username,
           avatar: req.user.photoURL || "/profile.jpg",
           joinTime: new Date(),
+          leaveTime: new Date(),
           emotions: [],
         },
       ],

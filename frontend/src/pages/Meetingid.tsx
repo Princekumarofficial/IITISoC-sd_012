@@ -211,7 +211,16 @@ function MeetingContent() {
   };
 
   const handleLeaveMeeting = async () => {
+     try {
+      await addleaveTime(meeting.meetingId);
+
+    } catch (error) {
+      console.error(error);
+
+    }
     const stream = useMediaStore.getState().stream;
+
+
     if (stream) {
       stream.getTracks().forEach(track => track.stop());
       useMediaStore.getState().setStream(null); // Clear from store
@@ -223,13 +232,7 @@ function MeetingContent() {
     })
     stopMediaTracks(localStream)
 
-    try {
-      await addleaveTime(meeting.meetingId);
-
-    } catch (error) {
-      console.error(error);
-
-    }
+   
 
     setTimeout(() => {
       navigate("/dashboard")
