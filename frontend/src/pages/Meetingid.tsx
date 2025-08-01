@@ -211,7 +211,7 @@ function MeetingContent() {
   };
 
   const handleLeaveMeeting = async () => {
-     try {
+    try {
       await addleaveTime(meeting.meetingId);
 
     } catch (error) {
@@ -232,7 +232,7 @@ function MeetingContent() {
     })
     stopMediaTracks(localStream)
 
-   
+
 
     setTimeout(() => {
       navigate("/dashboard")
@@ -601,9 +601,18 @@ function MeetingContent() {
                 {isVideoOn ? <Video className="w-6 h-6" /> : <VideoOff className="w-6 h-6" />}
               </Button>
 
-              <Button variant="secondary" className="controlbar-firstdiv-button rounded-full w-14 h-14 glass glow2 ripple" onClick={shareScreen}>
-                <Monitor className="w-6 h-6 " />
 
+              <Button
+                variant="ghost"
+                className="controlbar-firstdiv-button rounded-full w-14 h-14 glass glow2 ripple"
+
+                onClick={() => {
+                  setIsScreenSharing((prev) => !prev);
+                  startScreenShare();
+                }}
+
+              >
+                <Monitor className="w-6 h-6 " />
               </Button>
             </div>
 
@@ -646,8 +655,16 @@ function MeetingContent() {
                 <Sparkles className="w-4 h-4 mr-2" />
                 <p>Overlay</p>
               </Button>
-
               <Button
+                variant={activeTab === "chat" ? "secondary" : "ghost"}
+                size="sm"
+                onClick={() => {setActiveTab("chat");setShowSidebar(!showSidebar)}}
+                className="controlbar-middlediv-button glass glow ripple"
+              >
+                <MessageSquare className="w-4 h-4 mr-1" />
+                Chat
+              </Button>
+              {/*<Button
                 variant={isFaceSwapOn ? "default" : "outline"}
                 size="sm"
                 onClick={() => {
@@ -663,7 +680,7 @@ function MeetingContent() {
               >
                 <Zap className="w-4 h-4 mr-2" />
                 <p>Face Swap</p>
-              </Button>
+              </Button>*/}
 
               <Button
                 variant={isRecording ? "destructive" : "outline"}

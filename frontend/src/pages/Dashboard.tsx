@@ -315,7 +315,7 @@ useEffect(() => {
               </div>
 
               {/* Call History */}
-              <Card id="callhistory" className="glass glow slide-in-up breathe">
+              <Card id="callhistory" className="glass max-h-[43vh] p overflow-scroll glow slide-in-up breathe">
                 <CardHeader>
                   <CardTitle className="text-2xl flex items-center">
                     <History className="w-6 h-6 mr-2" />
