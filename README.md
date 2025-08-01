@@ -3,6 +3,8 @@
 
 An interactive, AI-powered video calling platform that brings **emotions to life** using facial expression recognition, emoji overlays, and live face transformations. Built to redefine how we communicate remotely.
 
+🟢 Live Demo: https://iiti-so-c-frontend.vercel.app
+
 ## 🧠 Introduction
 
 MediCall transforms traditional video calls into expressive conversations. By blending **machine learning**, **face tracking**, and **real-time communication**, it allows users to:
