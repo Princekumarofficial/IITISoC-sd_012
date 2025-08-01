@@ -656,13 +656,13 @@ function MeetingContent() {
                 <p>Overlay</p>
               </Button>
               <Button
-                variant={activeTab === "chat" ? "secondary" : "ghost"}
+                
                 size="sm"
                 onClick={() => {setActiveTab("chat");setShowSidebar(!showSidebar)}}
                 className="controlbar-middlediv-button glass glow ripple"
               >
-                <MessageSquare className="w-4 h-4 mr-1" />
-                Chat
+                <MessageSquare className="w-4 h-4 mr-2" />
+                <p>Chat</p>  
               </Button>
               {/*<Button
                 variant={isFaceSwapOn ? "default" : "outline"}
