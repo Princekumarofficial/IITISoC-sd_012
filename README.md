@@ -1,131 +1,178 @@
-# Advanced Real-Time Emotion Analyzer for Video Calls
 
+# MediCall – Advanced Real-Time Emotion Analyzer for Video Calls
 
+An interactive, AI-powered video calling platform that brings **emotions to life** using facial expression recognition, emoji overlays, and live face transformations. Built to redefine how we communicate remotely.
 
+## 🧠 Introduction
 
-## Introduction
-This project is a web-based real-time video calling platform enhanced with advanced facial analysis features such as emotion recognition, emoji overlay, and face swapping. It uses WebRTC for peer-to-peer video communication and integrates lightweight machine learning models in-browser to analyze facial expressions and respond dynamically in real time.
+MediCall transforms traditional video calls into expressive conversations. By blending **machine learning**, **face tracking**, and **real-time communication**, it allows users to:
 
-## Features
-1. **Real-Time Video Calls**  
-   - WebRTC-powered peer-to-peer video calling with room-based architecture.  
-   - Socket.io used for signaling.  
-   - Google OAuth for secure user authentication.
+- Reflect real-time **emotions** using emoji overlays.
+- Swap faces with custom/preset characters live on screen.
+- Engage in dynamic, expressive, and secure video calls.
 
-2. **Call Logs**  
-   - User call history stored in a relational (PostgreSQL) or NoSQL (MongoDB) database.
+## 🚀 Features
 
-3. **Face Detection and Tracking**  
-   - MediaPipe FaceMesh detects and tracks 468 facial landmarks directly in the browser.
+### 🎥 Real-Time Video Calls
+- WebRTC-based peer-to-peer video calling.
+- Room-based system with unique meeting IDs.
+- Integrated with Mediasoup SFU for scalable, multi-user video handling.
 
-4. **Emotion Recognition**  
-   - A lightweight MLP model trained using FER2013 dataset.  
-   - Real-time emotion classification based on facial landmark positions.  
-   - Deployed using TensorFlow.js.
+### 😀 Real-Time Emotion Recognition
+- Browser-based inference using `face-api.js`.
+- Live emoji overlays based on facial expressions.
+- MLP model trained on FER2013, optimized for web via TensorFlow.js.
 
-5. **Emoji Overlay**  
-   - Overlay emoji images on users' faces using HTML5 Canvas based on detected emotion and face tracking.
+### 🧑‍🎤 Face Swapping *(WIP)*
+- Real-time face replacement using facial landmarks and 3D modeling (Three.js).
+- Initial tests done with SimSwap (ONNX), future plans for stable integration.
 
-6. **Face Swapping**  
-   - Real-time 3D face mesh reconstruction using Three.js.  
-   - Custom or preset faces can be mapped onto the user’s face, following their expressions.
+### 💬 In-Call Chat
+- Real-time global chat using Socket.io.
+- Automatic welcome message.
+- Chat stored per meeting session.
 
-7. **Optimization**  
-   - Focus on low-latency and efficiency.  
-   - In-browser ML processing ensures data privacy and faster inference.
+### 👥 Room Features
+- Join via meeting ID—no prior friendship required.
+- Google OAuth for secure login.
+- Screen sharing and camera/audio testing tools.
 
-8. **Deployment**  
-   - Dockerized application deployed on a cloud server.
+### 📈 Analytics & Emotion Logs
+- Emotion overlays for each participant.
+- Tracks per-participant mood via emoji history.
+- Future: mood-based meeting summary, sentiment trends.
 
-## Tech Stack
+## 🛠️ Tech Stack
 
 ### Frontend
-- React.js
-- Tailwind CSS
-- JavaScript
+- **React.js**, **Tailwind CSS**
+- Zustand (state), Framer Motion (animations)
+- face-api.js (facial landmark & emotion detection)
 
 ### Backend
-- Node.js
-- Express.js
-- Socket.io
-- TensorFlow.js
-- PostgreSQL or MongoDB
+- **Node.js**, **Express.js**, **Socket.io**
+- Mediasoup (SFU server)
+- MongoDB (meeting/chat data), Firebase (user auth & assets)
 
-### Machine Learning
-- Python
-- PyTorch (for training)
-- TensorFlow.js (for inference)
+### ML/AI
+- **FER2013-based emotion classification**
+- **TensorFlow.js** for browser inference
+- Face landmark tracking using **MediaPipe** + FaceMesh
 
-## System Architecture
+## 📐 System Architecture
 
-1. **Client-side**
-   - React application handles UI, MediaPipe for facial tracking.
-   - TensorFlow.js runs the MLP model for real-time emotion detection.
-   - HTML5 Canvas for emoji rendering and Three.js for face swapping.
+- **Frontend**:  
+  Emotion detection, face tracking, and overlays handled in-browser (privacy-first).  
+  Uses Socket.io to sync chat & emotion data.
 
-2. **Server-side**
-   - Node.js + Express.js handles API requests and Socket.io handles signaling.
-   - Google OAuth is used for authentication.
-   - PostgreSQL or MongoDB stores call logs.
+- **Backend**:  
+  Express APIs for auth, meeting creation, chat, emotion analytics.  
+  Socket.io manages signaling + emotion broadcasting.  
+  MongoDB stores sessions and logs.
 
-## Setup Instructions
+- **SFU (Mediasoup)**:  
+  Central video routing node for multi-user video/audio.  
+  Enables bandwidth-efficient group calls.
+
+## ⚙️ Setup Instructions
 
 ### Prerequisites
-- Node.js and npm
-- Docker (for deployment)
-- Python (for ML training)
+- Node.js
+- Python (for ML model training)
 - MongoDB or PostgreSQL
+- Docker (optional for deployment)
 
-### Installation
+### 1. Clone the Repository
+```bash
+git clone https://github.com/your-username/medicall-video-call.git
+cd medicall-video-call
+```
 
-1. **Clone the Repository**
-   ```bash
-   git clone https://github.com/your-username/emotion-analyzer-video-call.git
-   cd emotion-analyzer-video-call
-   ```
+### 2. Install Dependencies
+```bash
+# Backend
+cd backend
+npm install
 
-2. **Install Dependencies**
-   ```bash
-   # Install root dependencies
-   npm install
+# Frontend
+cd ../frontend
+npm install
+```
 
-   # Install client dependencies
-   cd frontend
-   npm install
+### 3. Configure Environment Variables
 
-   # Install server dependencies
-   cd backend
-   npm install
-   ```
+#### backend/.env
+```env
+PORT=8000
+MONGO_URI=your_mongo_uri
+REFRESH_TOKEN_SECRET=your_Token secret
+ACCESS_TOKEN_SECRET=your_token secret 
+GOOGLE_CLIENT_ID=your_google_id
+GOOGLE_CLIENT_SECRET=your_google_secret
+JWT_SECRET=your_jwt_secret
+CLOUDINARY_CLOUD_NAME =your_cloudninary_cloud_name
+CLOUDINARY_API_KEY = your_cloudninary_api_key
+CLOUDINARY_API_SECRET =your_api_secret
+```
 
-3. **Environment Variables**
-   Create a `.env` file in both `server/` and `client/` directories with the following (example):
+#### frontend/.env
+```env
+VITE_APP_API_URL=https://gotogether-64ny.onrender.com and http://localhost:5000
+VITE_FIREBASE_API_KEY=your_firebase_api_key
+VITE_FIREBASE_AUTH_DOMAIN=your_firebase_auth_domain
+VITE_FIREBASE_PROJECT_ID=your_firebase_project_ID
+VITE_FIREBASE_STORAGE_BUCKET=your_firebase_project_bucket;
+VITE_FIREBASE_MESSAGING_SENDER_ID=your_firebase_caredentials
+VITE_FIREBASE_APP_ID=your_firebase_caredentials
+VITE_FIREBASE_MEASUREMENT_ID=your_firebase_caredentials
 
-   **server/.env**
-   ```env
-   GOOGLE_CLIENT_ID=your_google_client_id
-   GOOGLE_CLIENT_SECRET=your_google_client_secret
-   DATABASE_URL=your_postgres_or_mongo_uri
-   PORT=5000
-   ```
+```
 
-   **client/.env**
-   ```env
-   REACT_APP_BACKEND_URL=http://localhost:5000
-   ```
+## 🧪 Usage Guide
 
-## Running the Project
-
-### 1. Start Backend
-In a terminal window:
+### 🏁 Start Backend
 ```bash
 cd backend
 npm run dev
 ```
 
-### 2. Start Frontend
-In another terminal window:
+### 💻 Start Frontend
 ```bash
 cd frontend
 npm run dev
 ```
+
+## 📸 Core User Flow
+
+1. **Create Meeting**
+   - Click “Create Meeting” → Share generated ID.
+
+2. **Join Meeting**
+   - Enter meeting ID → Join real-time video room.
+
+3. **Toggle Emotions**
+   - Click "Emotions" → Activate real-time emoji overlays.
+
+4. **Chat**
+   - Use sidebar to send messages to all participants.
+
+5. **Leave**
+   - Leave time auto-logged for each user.
+
+## 📊 Results
+
+- Emotion overlay latency under **1s**.
+- Smooth performance across 3+ clients.
+- Chat and emoji logs persist per meeting.
+- Face swapping tested (prototype stage).
+
+## 🔮 Future Scope
+
+- 🎶 Add emotion-based background music.
+- 🧩 Integrate facial filters and mini-games.
+- 📊 Provide analytics dashboard with mood trends.
+- 🧠 Improve real-time face swap inference with better models.
+
+## 📃 License
+
+MIT License © Team MediCall – Abhay Lodhi, Pratyush Gupta, Hemant Yadav
