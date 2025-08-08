@@ -15,6 +15,9 @@ export interface VideoTileProps {
   showFaceSwap?: boolean;
   className?: string;
   style?: React.CSSProperties;
+    pinned?: boolean;
+  onPinToggle?: () => void;
+
   // onLocalEmotionDetected?: (data: { emotion: string; confidence: number }) => void;
   onLocalEmotionDetected?: (data: { emotion: string; confidence: number, landmarks: FaceLandmarks68 }) => void;
   enableLocalEmotionDetection?: boolean;
@@ -32,6 +35,8 @@ export const VideoTile: React.FC<VideoTileProps> = ({
   showFaceSwap = false,
   className = "",
   style = {},
+  pinned = false,
+  onPinToggle,
  
   onLocalEmotionDetected,
   enableLocalEmotionDetection = false,
@@ -230,8 +235,10 @@ export const VideoTile: React.FC<VideoTileProps> = ({
   }, [isLocal, enableLocalEmotionDetection, showEmoji]);
 
   return (
-     <div className="flex justify-center items-center">
-       <div className="relative w-fit h-full  overflow-hidden rounded-lg">
+     <div className={`flex w-fit justify-self-center justify-center items-center ${pinned ? "col-span-full row-span-full z-50" : ""}`}>
+
+       <div className={`relative w-fit h-full flex justify-center overflow-hidden rounded-lg ${pinned ? "w-full h-full" : ""}`}>
+
         <video
           ref={videoRef}
           autoPlay
@@ -255,11 +262,11 @@ export const VideoTile: React.FC<VideoTileProps> = ({
 
       )}
 
-      {showFaceSwap && (
+      {/* {showFaceSwap && (
         <div className="absolute inset-0 bg-gradient-to-br from-green-500/20 to-blue-500/20 flex items-center justify-center">
           <div className="text-6xl animate-pulse">🦸‍♂️</div>
         </div>
-      )}
+      )} */}
 
       {emotion && (!isLocal || enableLocalEmotionDetection) && (!!(videoRef.current?.srcObject as MediaStream)?.getVideoTracks()[0]?.enabled) && (
         <div className="absolute top-2 right-2 text-3xl animate-bounce">{emotion}</div>
@@ -268,6 +275,15 @@ export const VideoTile: React.FC<VideoTileProps> = ({
       <div className="absolute bottom-2 left-2 text-white bg-black/60 px-2 py-1 text-xs rounded">
         {name} {emotionConfidence ? `(${(emotionConfidence * 100).toFixed(0)}%)` : ""}
       </div>
+      {onPinToggle && (
+  <button
+    onClick={onPinToggle}
+    className="absolute top-2 left-2 z-10 bg-black/60 text-white px-2 py-1 rounded hover:bg-black/80 transition"
+    title={pinned ? "Unpin" : "Pin to screen"}
+  >
+    {pinned ? "❌" : "📌"}
+  </button>
+)}
       </div>
     </div>
   )

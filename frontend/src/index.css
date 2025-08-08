@@ -608,7 +608,37 @@ top: 40px;
 
 }
 
-@media screen and (max-width: 605px) and (min-width:0px) {
+@media screen and (max-width: 570px) and (min-width:0px) {
+  .header-buttons-1{
+    display: none;
+  }
+  .header-buttons{
+    position: absolute;
+    right: 0px;
+    top: 0px;
+    scale: 70%;
+    /* z-index: 100; */
+    display: flex;
+    flex-direction: column;
+  }
+  .duration{
+    scale: 75%;
+    position: absolute;
+    top: 55px;
+    left: 47px;
+  }
+  .meet-title{
+    max-width: 40px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .meet-id{
+    width: 100px;
+    
+  }
+}
+@media screen and (max-width: 725px) and (min-width:570px) {
 
 .header-buttons-2{
   margin-top: 20px;

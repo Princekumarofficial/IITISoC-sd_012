@@ -50,6 +50,7 @@ function App() {
         <Route path="/contactus" element={authUser ? <ContactForm /> : <Navigate to="/" />} />
         <Route path="/preJoin/:id?" element={authUser ? <PreJoinPage />: <Navigate to="/" />} />
           <Route path="/legal" element={<LegalPage />} />
+          
       </Routes>
      
      

@@ -3,10 +3,13 @@ import { VideoTile } from "./VideoTile";
 import { getEmojiFromEmotion } from "../utils/getEmoji";
 import { RemoteStream } from "../hooks/useSFUClient";
 
-export default function RemoteStreamTiles({ remote, emotionData, isFaceSwapOn }: {
+export default function RemoteStreamTiles({ remote, emotionData, isFaceSwapOn,pinnedPeerId,onTogglePin }: {
   remote: RemoteStream,
   emotionData: any,
-  isFaceSwapOn: boolean
+  isFaceSwapOn: boolean,
+  pinnedPeerId: string | null;
+  onTogglePin: (peerId: string) => void;
+  
 }) {
   const videoTracks = remote.stream.getVideoTracks();
   const cameraTrack = videoTracks[0] || null;
@@ -29,6 +32,8 @@ export default function RemoteStreamTiles({ remote, emotionData, isFaceSwapOn }:
           showEmoji={emotionData?.isOverlayOn}
           showFaceSwap={isFaceSwapOn}
           landmarks={emotionData?.landmarks}
+           pinned={pinnedPeerId === remote.peerId}
+  onPinToggle={() => onTogglePin(remote.peerId)}
         />
       )}
 
@@ -43,6 +48,8 @@ export default function RemoteStreamTiles({ remote, emotionData, isFaceSwapOn }:
           showEmoji={false}
           showFaceSwap={false}
           landmarks={{}}
+          pinned={pinnedPeerId === remote.peerId}
+  onPinToggle={() => onTogglePin(remote.peerId)}
         />
       )}
     </>

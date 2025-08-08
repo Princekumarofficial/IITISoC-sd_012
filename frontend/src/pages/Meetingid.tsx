@@ -52,6 +52,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/Avatar";
 import { signOut } from "firebase/auth";
 import { auth } from "../service/firebase";
+import { CopyableText } from "../components/ui/CopyableText";
 
 
 function MeetingContent() {
@@ -68,7 +69,7 @@ function MeetingContent() {
 
   console.log(participants);
 
-
+  
   const { id } = useParams();
   const { isAudioEnabled, isVideoEnabled } = useMediaStore.getState()
   const [isMuted, setIsMuted] = useState(!isAudioEnabled)
@@ -83,7 +84,7 @@ function MeetingContent() {
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [meetingDuration, setMeetingDuration] = useState(0)
   const [emotionList, setEmotionList] = useState<
-    { id: string; name: string; emotion: string; confidence: number }[]
+  { id: string; name: string; emotion: string; confidence: number }[]
   >([]);
   const [userEmotions, setUserEmotions] = useState<{
     [userId: string]: { emotion: string; confidence: number, landmarks: LandmarkSection, isOverlayOn: boolean };
@@ -98,7 +99,7 @@ function MeetingContent() {
     setEmotionList((prev) => {
       // Find the last entry for this user
       const lastEmotion = [...prev].reverse().find(e => e.id === userId);
-
+      
       // Only add if emotion is different
       if (!lastEmotion || lastEmotion.emotion !== emotion) {
         return [
@@ -111,7 +112,7 @@ function MeetingContent() {
           },
         ];
       }
-
+      
       return prev; // No change if emotion is the same
     });
   });
@@ -121,8 +122,13 @@ function MeetingContent() {
   const [isScreenSharing, setIsScreenSharing] = useState<Boolean>(false);
   const [theme, setTheme] = useState("light");
   const { authUser, logout } = useAuthStore();
-
+  
   const maxTiles = useMaxTilesByScreen();
+  //7
+  const tileCount = remoteStreams.length + 1; // +1 for local
+  const columns = tileCount <= 1 ? 1 : tileCount <= 2 ? 2 : tileCount <= 4 ? 2 : tileCount <= 6 ? 3 : tileCount <= 9 ? 3 : 4;
+  const [pinnedPeerId, setPinnedPeerId] = useState<string | null>(null);
+
   const participantsList = [
     {
       id: "local",
@@ -133,7 +139,10 @@ function MeetingContent() {
       name: remote.peerName,
     })),
   ];
-
+   //7
+   const handleTogglePin = (peerId: string) => {
+  setPinnedPeerId((prev) => (prev === peerId ? null : peerId));
+};
   useEffect(() => {
     if (!localEmotion || localEmotionConfidence === null) return;
 
@@ -330,7 +339,8 @@ function MeetingContent() {
 
 
         {/* Header */}
-        <header className="glass  z-[50] backdrop-blur-sm border-b h-[10vh] px-4 py-3 flex  md:flex-nowrap items-center justify-between gap-4 md:gap-0 animate-slide-in-left">
+        <header className="glass z-[50] backdrop-blur-sm border-b h-[10vh] px-4 py-3 flex  md:flex-nowrap items-center justify-between gap-4 md:gap-0 animate-slide-in-left">
+
           {/* Left side: Logo + Title + Info */}
           <div className="flex flex-col md:flex-row md:items-center md:space-x-6 space-y-2 md:space-y-0 w-full md:w-auto">
             <div className="flex items-center space-x-3">
@@ -338,29 +348,31 @@ function MeetingContent() {
                 <Video className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h1 className="font-semibold text-base sm:text-lg truncate">
+                <h1 className="font-semibold meet-title text-base sm:text-lg truncate">
                   {meeting?.title || "Meeting Room"}
                 </h1>
-                <p className="text-xs text-muted-foreground truncate ">ID: {id}</p>
+              
+                <p className="text-xs text-muted-foreground meet-id truncate  w-[200px] h-[37px]"> <CopyableText value={`${id}`}/></p>
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2 md:space-x-4">
-              <Badge variant="secondary" className="glass animate-scale-in">
-                <Users className="w-3 h-3 mr-1" />
-                {remoteStreams.length + 1} participants
-              </Badge>
-              <Badge variant="outline" className="glass animate-scale-in">
-                <Clock className="w-3 h-3 mr-1" />
-                {formatDuration(meetingDuration)}
-              </Badge>
-              {isRecording && (
-                <Badge variant="destructive" className="animate-pulse">
-                  <Record className="w-3 h-3 mr-1" />
-                  Recording
-                </Badge>
-              )}
-            </div>
+          <div className="flex duration flex-wrap items-center gap-2 md:space-x-4 text-sm">
+  <div className="flex items-center gap-1">
+    <Users className="w-3 h-3" />
+    {remoteStreams.length + 1}
+  </div>
+  <div className="flex items-center gap-1">
+    <Clock className="w-3 h-3" />
+    {formatDuration(meetingDuration)}
+  </div>
+  {isRecording && (
+    <div className="flex items-center gap-1 text-red-500 animate-pulse">
+      <Record className="w-3 h-3" />
+      Recording
+    </div>
+  )}
+</div>
+
           </div>
 
           {/* Right side: Buttons */}
@@ -462,14 +474,15 @@ function MeetingContent() {
           <div className="flex-1 meeting-main">
             {/* 🛠️ Modified: Responsive dynamic grid */}
             <div className="h-full w-full p-4 overflow-auto">
-              <div className="grid gap-4 w-full h-full"
-                style={{
-                  gridTemplateColumns: `repeat(auto-fit, minmax(300px, 1fr))`,
-                  gridAutoRows: "minmax(200px, 1fr)" // Ensures consistent row height
-                }}
-              >      {/* Local video with camera manager */}
+              <div
+  className="grid gap-4 w-full h-full justify-center"
+  style={{
+    gridTemplateColumns: `repeat(${columns}, 1fr)`,
+    gridAutoRows: "minmax(200px, 1fr)",
+  }}
+>      {/* Local video with camera manager */}
 
-                {localStream && (
+                {/*localStream && (
                   <VideoTile
                     key="local"
                     stream={localStream}
@@ -484,11 +497,11 @@ function MeetingContent() {
                     enableLocalEmotionDetection={isEmotionDetectionOn}
                     landmarks={localLandmarks}
                   />
-                )}
+                )*/}
 
                 {/* Other participants */}
 
-                {remoteStreams.map((remote, index) => {
+                {/*remoteStreams.map((remote, index) => {
                   if (index + 1 > maxTiles - 1) return null; // +1 for local tile
                   return (
                     <RemoteStreamTiles
@@ -498,7 +511,87 @@ function MeetingContent() {
                       isFaceSwapOn={isFaceSwapOn}
                     />)
                 }
-                )}
+                )*/}
+
+
+
+                {/* 7 */}
+                {pinnedPeerId
+  ? (
+    <>
+      {/* Show only pinned participant full screen */}
+      {pinnedPeerId === "local" ? (
+        <VideoTile
+          key="local-pinned"
+          stream={localStream}
+          name="You"
+          isLocal
+          muted={isMuted}
+          emotion={getEmojiFromEmotion(localEmotion)}
+          emotionConfidence={localEmotionConfidence}
+          showEmoji={isEmojiOverlayOnRef.current}
+          showFaceSwap={isFaceSwapOn}
+          onLocalEmotionDetected={handleLocalEmotionDetected}
+          enableLocalEmotionDetection={isEmotionDetectionOn}
+          landmarks={localLandmarks}
+          pinned
+          onPinToggle={() => setPinnedPeerId(null)}
+        />
+      ) : (
+        remoteStreams
+          .filter(remote => remote.peerId === pinnedPeerId)
+          .map(remote => (
+            <RemoteStreamTiles
+            key={remote.peerId}
+  remote={remote}
+  emotionData={userEmotions[remote.peerId]}
+  isFaceSwapOn={isFaceSwapOn}
+  pinnedPeerId={pinnedPeerId}
+  onTogglePin={handleTogglePin}
+/>
+          ))
+      )}
+    </>
+  )
+  : (
+    <>
+      {/* Render all tiles normally */}
+      {localStream && (
+        <VideoTile
+          key="local"
+          stream={localStream}
+          name="You"
+          isLocal
+          muted={isMuted}
+          emotion={getEmojiFromEmotion(localEmotion)}
+          emotionConfidence={localEmotionConfidence}
+          showEmoji={isEmojiOverlayOnRef.current}
+          showFaceSwap={isFaceSwapOn}
+          onLocalEmotionDetected={handleLocalEmotionDetected}
+          enableLocalEmotionDetection={isEmotionDetectionOn}
+          landmarks={localLandmarks}
+          onPinToggle={() => setPinnedPeerId("local")}
+          
+        />
+      )}
+
+      {remoteStreams.map((remote, index) => {
+        if (index + 1 > maxTiles - 1) return null;
+        return (
+          <RemoteStreamTiles
+            key={remote.peerId}
+  remote={remote}
+  emotionData={userEmotions[remote.peerId]}
+  isFaceSwapOn={isFaceSwapOn}
+  pinnedPeerId={pinnedPeerId}
+  onTogglePin={handleTogglePin}
+/>
+        );
+      })}
+    </>
+  )
+}
+
 
                 {isFaceSwapOn && (
                   <div className="absolute inset-0 bg-gradient-to-br from-green-500/20 to-blue-500/20 rounded-lg flex items-center justify-center">
@@ -655,7 +748,7 @@ function MeetingContent() {
                 <Sparkles className="w-4 h-4 mr-2" />
                 <p>Overlay</p>
               </Button>
-              <Button
+              {/* <Button
                 
                 size="sm"
                 onClick={() => {setActiveTab("chat");setShowSidebar(!showSidebar)}}
@@ -663,8 +756,8 @@ function MeetingContent() {
               >
                 <MessageSquare className="w-4 h-4 mr-2" />
                 <p>Chat</p>  
-              </Button>
-              {/*<Button
+              </Button> */}
+              <Button
                 variant={isFaceSwapOn ? "default" : "outline"}
                 size="sm"
                 onClick={() => {
@@ -680,7 +773,7 @@ function MeetingContent() {
               >
                 <Zap className="w-4 h-4 mr-2" />
                 <p>Face Swap</p>
-              </Button>*/}
+              </Button>
 
               <Button
                 variant={isRecording ? "destructive" : "outline"}
